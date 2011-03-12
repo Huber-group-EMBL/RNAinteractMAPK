@@ -10,4 +10,4 @@ License: Artistic-2.0
 LazyLoad: yes
 Imports: grid, gdata, crossdes, MASS, genefilter
 Depends: R (>= 2.12.0), fields, sparseLDA, RNAinteract
-Packaged: 2011-03-11 12:46:01 UTC; bfischer
+
