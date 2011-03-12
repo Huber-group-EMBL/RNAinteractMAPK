@@ -1,0 +1,25 @@
+
+importFrom(sparseLDA, sda)
+importFrom(grid, viewport, pushViewport, popViewport, upViewport, grid.newpage, grid.layout, grid.raster, grid.points, grid.text, grid.polyline, grid.polygon, grid.lines, grid.rect, grid.xaxis, grid.yaxis, unit, gpar, vpPath, convertWidth)
+importFrom(MASS, kde2d)
+importFrom(gdata, upperTriangle)
+importFrom(crossdes, williams)
+import(RNAinteract)
+
+
+export(MAPK.predict.classification)
+export(MAPK.cv.classifier)
+export(MAPK.plot.classification)
+
+export(MAPK.smooth.scatter)
+
+export(MAPK.screen.as.array)
+export(MAPK.cv.TPS)
+export(MAPK.estimate.TPS)
+export(MAPK.plot.TPS.single)
+export(MAPK.plot.TPS.all)
+
+export(MAPK.plot.heatmap.raster)
+
+export(MAPK.report.gene.lists.paper)
+

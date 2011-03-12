@@ -1,0 +1,1285 @@
+%\VignetteIndexEntry{RNAinteractMAPK}
+%\VignetteKeywords{synthetic genetic interactions by RNAi}
+%\VignettePackage{RNAinteractMAPK}
+
+\documentclass[10pt,a4paper]{article}
+
+\RequirePackage{amsfonts,amsmath,amstext,amssymb,amscd}
+\usepackage{graphicx}
+\usepackage{verbatim}
+\usepackage{hyperref}
+\usepackage{color}
+\definecolor{darkblue}{rgb}{0.2,0.0,0.4}
+
+\topmargin -1.5cm
+\oddsidemargin -0cm   % read Lamport p.163
+\evensidemargin -0cm  % same as oddsidemargin but for left-hand pages
+\textwidth 17cm
+\textheight 24.5cm
+\parindent0em
+
+\newcommand{\lib}[1]{{\mbox{\normalfont\textsf{#1}}}}
+\newcommand{\file}[1]{{\mbox{\normalfont\textsf{'#1'}}}}
+\newcommand{\R}{{\mbox{\normalfont\textsf{R}}}}
+\newcommand{\Rfunction}[1]{{\mbox{\normalfont\texttt{#1}}}}
+\newcommand{\Robject}[1]{{\mbox{\normalfont\texttt{#1}}}}
+\newcommand{\Rpackage}[1]{{\mbox{\normalfont\textsf{#1}}}}
+\newcommand{\Rclass}[1]{{\mbox{\normalfont\textit{#1}}}}
+\newcommand{\code}[1]{{\mbox{\normalfont\texttt{#1}}}}
+
+\newcommand{\email}[1]{\mbox{\href{mailto:#1}{\textcolor{darkblue}{\normalfont{#1}}}}}
+\newcommand{\web}[2]{\mbox{\href{#2}{\textcolor{darkblue}{\normalfont{#1}}}}}
+
+\SweaveOpts{keep.source=TRUE,cache=TRUE,eps=FALSE}
+
+\begin{document}
+
+\title{Mapping of Signalling Networks through Synthetic Genetic Interaction Analysis by RNAi}
+
+\author{Bernd Fischer}
+
+\maketitle
+
+\tableofcontents
+
+\section{Introduction}
+The package contains the data from the RNAi interaction screen reported in Horn, Sandmann, Fischer, Huber, Boutros, {\it Mapping of Signalling Networks through Synthetic Genetic Interaction Analysis by RNAi}, Nature Methods, 2011. This vignette shows the R code for ploting all figures in the paper.
+
+\section{Installation of the RNAinteractMAPK package}
+To install the package \Rpackage{RNAinteractMAPK}, you need a running version of \R~(www.r-project.org, version $\geq 2.13.0$). After installing \R~you can run the following commands from the \R~command shell to install \Rpackage{RNAinteractMAPK} and all required packages.
+
+<<installation,eval=FALSE>>=
+source("http://bioconductor.org/biocLite.R")
+biocLite("RNAinteractMAPK")
+@
+
+\section{Loading data and creating an RNAinteract object}
+The package \Rpackage{RNAinteractMAPK} is loaded by the following command.
+
+<<library,results=hide>>=
+library("RNAinteractMAPK")
+@
+
+The package contains the data and the source code for reproducing all figures from the paper {\it Mapping of Signalling Networks through Synthetic Genetic Interaction Analysis by RNAi} by Horn, Sandmann, Fischer, Huber, Boutros, Mapping of Signalling Networks through Synthetic Genetic Interaction Analysis by RNAi, Nature Methods, 2011. Most of the underlying analysis is implemented in the software package \Rpackage{RNAinteract}. Please refer to the \Rpackage{RNAinteract} vignette for further details.
+
+The main interaction matrix \code{PI} can be loaded by the following by the following code.
+<<load interaction data>>=
+data("Dmel2PPMAPK", package="RNAinteractMAPK")
+PI <- getData(Dmel2PPMAPK, type="pi", format="targetMatrix", screen="mean", withoutgroups = c("pos", "neg"))
+@ 
+
+If you want to reproduce a single figure you can now immediately jump to the respective section and run the code within one section. The source code shown in this PDF document shows the essential part of the analysis. Sometimes, some further formatting is needed to produce the plots as shown here; the code for that is not displayed in the PDF, but can be accessed in the source file
+<<sourecode, eval=FALSE>>=
+Rscript = system.file("doc", "RNAinteractMAPK.R", package="RNAinteractMAPK")
+Rscript
+@ 
+It is an \R-script that reproduces all figures including any formatting steps. In addition it is easier to copy the code out of the R script to the R console when going through this manuscript.
+
+\section{Main analysis of the synthetic genetic interaction screen}
+\label{mainanalysis}
+
+\subsection{Creation of an RNAinteract object from flat files}
+The raw data of the screen and the plate configuration can be found in the following directory
+<<inputpath, results=hide>>=
+inputpath = system.file("extdata", "Dmel2PPMAPK",package="RNAinteractMAPK")
+inputpath
+@ 
+
+The directory \code{inputpath} contains five text files:
+
+\code{Platelist.txt}, \code{Targets.txt}, \code{Reagents.txt}, \code{TemplateDesign.txt}, \code{QueryDesign.txt}.
+
+See the vignette of \Rpackage{RNAinteract} for further details on the file formats. The data and annotation are loaded and an \Rclass{RNAinteract} object is created with the following command.
+
+<<createRNAinteract>>=
+Dmel2PPMAPK = createRNAinteractFromFiles(name="Pairwise PPMAPK screen", path = inputpath)
+@
+
+The object \code{Dmel2PPMAPK} contains two replicate screens and three readout channels.
+<<channelnames>>=
+getScreenNames(Dmel2PPMAPK)
+getChannelNames(Dmel2PPMAPK)
+@
+
+\subsection{Single RNAi effects and pairwise interactions}
+First, the single perturbation effects (called main effects) are estimated from the screen. For each template position and for each query reagent a main effect is estimated.
+
+<<main effects, results=hide>>=
+Dmel2PPMAPK <- estimateMainEffect(Dmel2PPMAPK)
+Dmel2PPMAPK <- normalizeMainEffectQuery(Dmel2PPMAPK,batch=rep(1:4,each=48))
+Dmel2PPMAPK <- normalizeMainEffectTemplate(Dmel2PPMAPK, channel="intensity")
+@
+In our data, the main effect contained apparent time or plate dependent trends. We adjusted and removed them. The normalization of the main effects does not influence the subsequent estimation of the pairwise interaction, but it makes the main effects better comparable between replicates and different screens. Next, the pairwise interaction term was estimated.
+
+<<pairwise interaction term, results=hide>>=
+Dmel2PPMAPK <- computePI(Dmel2PPMAPK)
+@
+
+The object \code{Dmel2PPMAPK} contains two replicate screens. We summarized these two screens by taking the mean value for each measurement and added the mean screen as a new screen to the original screen. 
+
+<<summarize and combine screens, results=hide>>=
+Dmel2PPMAPKmean <- summarizeScreens(Dmel2PPMAPK, screens=c("1","2"))
+Dmel2PPMAPK <- bindscreens(Dmel2PPMAPK, Dmel2PPMAPKmean)
+@
+
+Three different p-values (t-test with pooled variance morderation, \Rpackage{limma}, and multivariate Hotelling $T^2$ test) were computed by
+
+<<compute p-values, results=hide>>=
+Dmel2PPMAPK <- computePValues(Dmel2PPMAPK, verbose = FALSE)
+Dmel2PPMAPKT2 <- computePValues(Dmel2PPMAPK, method="HotellingT2", verbose = FALSE)
+Dmel2PPMAPKlimma <- computePValues(Dmel2PPMAPK, method="limma",verbose = FALSE)
+@
+
+independently for each screen and each channel. 
+
+\section{Main figures}
+\label{mainfigures}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection*{Figure 1 abc: Genetic interaction surfaces}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The code to generate these is the same as that for Suppl. Figure S5, shown later in this vignette. 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection*{Figure 2: Heatmap of genetic interactions}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+See Suppl. Figures S6, S7, and S8.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% \subsection*{Figure 4 a: Venn diagram for non-redundant sets of significant genetic interactions}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+\subsection*{Figure 4 b: Node degree distribution}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+See Suppl. Figure S11.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection*{Figure 4 cd, Fig. 5 a: double RNAi plots for CG10376, Gap1, Cka}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Double RNAi plots are plotted for three different genes.
+
+<<Fig. 4 cd 5 a: double RNAi plos for CG10376 Gap1 Cka, echo=FALSE, results=hide>>=
+pdf(width=8,height=8,file="Figure-4c-doubleRNAi-CG10376.pdf")
+grid::pushViewport(grid::viewport(layout=grid::grid.layout(2, 2,
+                        widths = grid::unit(c(0.4, 1), c("lines", "null")), 
+                        heights = grid::unit(c(1, 0.7), c("null", "lines")), 
+                        respect = TRUE)))
+grid::pushViewport(grid::viewport(layout.pos.row = 1, 
+                      layout.pos.col = 2, clip = FALSE))
+@ 
+
+<<Fig. 4 cd 5 a: double RNAi plos for CG10376 Gap1 Cka, results=hide>>=
+plotDoublePerturbation(Dmel2PPMAPK, screen="mean", channel="nrCells", target="CG10376",
+                       main="CG10376", range=c(-1, 0.05), 
+                       axisOnOrigin=FALSE, drawBox=FALSE, show.labels="q.value",
+                       xlab="rel. nuclear count [log2]", ylab="rel. nuclear count [log2]")
+@ 
+
+<<Fig. 4 cd 5 a: double RNAi plos for CG10376 Gap1 Cka, echo=FALSE, results=hide>>=
+grid::grid.text("double RNAi effect",x=grid::unit(-3.5,"lines"),y=grid::unit(0.5,"npc"),just=c("center","bottom"),vp=grid::vpPath("dplayout","dpvp"),rot=90)
+grid::grid.text("single RNAi effect",x=grid::unit(0.5,"npc"),y=grid::unit(-3.8,"lines"),just=c("center","top"),vp=grid::vpPath("dplayout","dpvp"))
+dev.off()
+
+pdf(width=8,height=8,file="Figure-4d-doubleRNAi-Gap1.pdf")
+grid::pushViewport(grid::viewport(layout=grid::grid.layout(2, 2,
+                        widths = grid::unit(c(0.4, 1), c("lines", "null")), 
+                        heights = grid::unit(c(1, 0.7), c("null", "lines")), 
+                        respect = TRUE)))
+grid::pushViewport(grid::viewport(layout.pos.row = 1, 
+                      layout.pos.col = 2, clip = FALSE))
+@
+
+<<Fig. 4 cd 5 a: double RNAi plos for CG10376 Gap1 Cka, results=hide>>=
+plotDoublePerturbation(Dmel2PPMAPK, screen="mean", channel="nrCells", target="Gap1",
+                       main="Gap1 (CG6721)", range=c(-2.3, 1.0), 
+                       axisOnOrigin=FALSE, drawBox=FALSE, show.labels="q.value",
+                       xlab="rel. nuclear count [log2]", ylab="rel. nuclear count [log2]")
+@ 
+
+<<Fig. 4 cd 5 a: double RNAi plos for CG10376 Gap1 Cka, echo=FALSE, results=hide>>=
+grid::grid.text("double RNAi effect",x=grid::unit(-3.5,"lines"),y=grid::unit(0.5,"npc"),just=c("center","bottom"),vp=grid::vpPath("dplayout","dpvp"),rot=90)
+grid::grid.text("single RNAi effect",x=grid::unit(0.5,"npc"),y=grid::unit(-3.8,"lines"),just=c("center","top"),vp=grid::vpPath("dplayout","dpvp"))
+dev.off()
+
+pdf(width=8,height=8,file="Figure-5a-doubleRNAi-Cka.pdf")
+grid::pushViewport(grid::viewport(layout=grid::grid.layout(2, 2,
+                        widths = grid::unit(c(0.4, 1), c("lines", "null")), 
+                        heights = grid::unit(c(1, 0.7), c("null", "lines")), 
+                        respect = TRUE)))
+grid::pushViewport(grid::viewport(layout.pos.row = 1, 
+                      layout.pos.col = 2, clip = FALSE))
+@ 
+
+<<Fig. 4 cd 5 a: double RNAi plos for CG10376 Gap1 Cka, results=hide>>=
+plotDoublePerturbation(Dmel2PPMAPK, screen="mean", channel="nrCells", target="Cka",
+                       main="Cka (CG7392)", range=c(-2.3, 1.0), 
+                       axisOnOrigin=FALSE, drawBox=FALSE, show.labels="q.value",
+                       xlab="rel. nuclear count [log2]", ylab="rel. nuclear count [log2]")
+@ 
+
+
+<<Fig. 4 cd 5 a: double RNAi plos for CG10376 Gap1 Cka, echo=FALSE, results=hide>>=
+grid::grid.text("double RNAi effect",x=grid::unit(-3.5,"lines"),y=grid::unit(0.5,"npc"),just=c("center","bottom"),vp=grid::vpPath("dplayout","dpvp"),rot=90)
+grid::grid.text("single RNAi effect",x=grid::unit(0.5,"npc"),y=grid::unit(-3.8,"lines"),just=c("center","top"),vp=grid::vpPath("dplayout","dpvp"))
+dev.off()
+@ 
+
+\includegraphics[width=0.32\textwidth]{Figure-4c-doubleRNAi-CG10376.pdf}\hfill
+\includegraphics[width=0.32\textwidth]{Figure-4d-doubleRNAi-Gap1.pdf}\hfill
+\includegraphics[width=0.32\textwidth]{Figure-5a-doubleRNAi-Cka.pdf}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection*{Figure 4 ef: Classification}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+To train a classifier a training set is defined. A sparse linear discriminant analysis is trained individually for each channel and each screen. By leave-one-out cross validation the cross validated posterior probability for each gene in the training set is computed. This is an estimate of the predictive power of each classifier. The classifiers are combined by averaging their posterior probabilities. 
+
+<<Fig. 4: Classification, results=hide>>=
+traingroups = list(RasMapK = c("csw","drk","Sos","Ras85D","phl","Dsor1","rl","pnt"),
+  RasMapKInh = c("Gap1","PTP-ER","Mkp3","aop","Pten"),
+  JNK = c("Gadd45","Btk29A","msn","slpr","bsk","Jra","kay"),
+  others = c("CG10376","CG42327","CG13197","CG12746","CG3530","CG17029","CG17598",
+    "CG9391","CG9784","CG10089"))
+groupcol = c(RasMapK = "blue", RasMapKInh = "orange", JNK = "green", others = "white")
+sgi <- sgisubset(Dmel2PPMAPK, screen=c("1","2"))
+CV <- MAPK.cv.classifier(sgi, traingroups)
+@ 
+
+The cross-validated posterior probabilities are depicted by a ternary plot. In a ternary plot one can only display probabilities for three classes. Since a fourth {\t doubt} class is included in the training set, the assignment probability to the {\it doubt} class is depicted as the circle diameter. The smaller the circle diameter, the more likely the gene belongs to the doubt class.
+The distance to the apexes shows the assignment probability of a gene to one of the three classes given that the gene does not belong to the doubt class. In the same manner the posterior probabilities of the classifier for {\it new} genes outside the training set are shown in an extra plot. 
+
+<<Fig. 4: Classification, echo=FALSE, results=hide>>=
+pdf(width=9,file="Figure-4-a-classifier-training.pdf")
+@ 
+<<Fig. 4: Classification, results=hide>>=
+MAPK.plot.classification(CV$CVposterior, y=CV$y,
+                         classes = c("RasMapKInh", "JNK", "RasMapK"),
+                         classnames = c("RasMAPK-Inhibitors","JNK","RasMAPK"),
+                         classcol = c("orange", "#389e33", "blue"),
+                         main = "Cross-Validated Posterior Probabilities",
+                         textToLeft = c("Ras85D","Sos","Dsor1")
+                   )
+@ 
+<<Fig. 4: Classification, echo=FALSE, results=hide>>=
+dev.off()
+pdf(width=9,file="Figure-4-b-classifier-prediction.pdf")
+@ 
+<<Fig. 4: Classification, results=hide>>=
+prediction <- MAPK.predict.classification(sgi, traingroups)
+MAPK.plot.classification(prediction$posteriornew,
+                         classes = c("RasMapKInh", "JNK", "RasMapK"),
+                         classnames = c("RasMAPK-Inhibitors","JNK","RasMAPK"),
+                         classcol = c("orange", "#389e33", "blue"),
+                         main = "Posterior Probabilities of genes outside training set",
+                         textToRight = c("stg","Cka"),
+                         threshText = 0.4)
+@ 
+<<Fig. 4: Classification, echo=FALSE, results=hide>>=
+dev.off()
+@ 
+
+\includegraphics[width=0.5\textwidth]{Figure-4-a-classifier-training.pdf}
+\includegraphics[width=0.5\textwidth]{Figure-4-b-classifier-prediction.pdf}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Supplementary Figures}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection*{Suppl. Figure S1: Validation of mRNA levels for single RNAi knockdowns}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+For each gene there were two independent dsRNA designs. The mRNA level of the targeted genes was measured by qRT-PCR 5 days after infection. The table \code{T} contains mean and stderror over replicates of qRT-PCR experiments for each RNAi reagent. Each row contains the mRNA levels for two RNAi designs.
+<<Fig. S1: Validation of mRNA levels for single RNAi knockdowns, results=hide>>=
+data("mRNAsingleKDefficiency", package = "RNAinteractMAPK")
+hh <- apply(as.matrix(mRNAsingleKDefficiency[,c("MeanDesign1","MeanDesign2")]),1,mean)
+I <- order(-hh)
+D <- data.frame(mRNAlevel=c(mRNAsingleKDefficiency[,"MeanDesign1"],mRNAsingleKDefficiency[,"MeanDesign2"]),
+                sd=c(mRNAsingleKDefficiency[,"StderrDesign1"],mRNAsingleKDefficiency[,"StderrDesign2"]),
+                Gene=factor(c(mRNAsingleKDefficiency[,"Symbol"],mRNAsingleKDefficiency[,"Symbol"]), 
+                  levels=mRNAsingleKDefficiency[I,"Symbol"]),
+                design=factor(rep(c("design 1","design 2"),each=89),
+                  levels=c("design 1","design 2")))
+bc <- barchart(mRNAlevel ~ Gene, data = D,
+         layout = c(1,1), origin = 1, stack = FALSE, 
+         group = D$design, col = c("lightblue", "red"),
+         auto.key = list(points=FALSE, rectangles = TRUE, corner = c(0.97,0.97)),
+         par.settings = list(superpose.polygon = list(col=c("lightblue", "red"))),
+         xlab="Gene", ylab = "mRNA level",
+         sub = "error bars: standard deviation", col.sub = "gray30",
+         scales = list(x = list(cex=0.7,rot = 45), y=list(tick.number=9)),
+         ylim=c(0,1.82), main = "mRNA Knock Down Efficiency",
+         panel=function(...) {
+           panel.abline(h=seq(0.2, 1.9, by=0.2),lty="dotted")
+           panel.abline(h=1)
+           panel.barchart(...)
+           x = (as.integer(D$Gene) + 0.375 * (as.integer(D$design) - (2 + 1)/2))
+           y1 = D$mRNAlevel - D$sd
+           y2 = D$mRNAlevel + D$sd
+           panel.arrows(x,y1,x,y2,code=3,angle=90,length=0.03,col="gray30")
+         } )
+
+@
+
+<<Fig. S1: Validation of mRNA levels for single RNAi knockdowns, echo=FALSE, results=hide>>=
+pdf(width=13,height=7,file="Figure-S01-knockdownValidation.pdf")
+print(bc)
+dev.off()
+@ 
+
+\includegraphics[width=\textwidth]{Figure-S01-knockdownValidation.pdf}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection*{Suppl. Figure S2: Validation of mRNA levels for double RNAi knockdowns}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+The mRNA level of 8 genes was measured by qRT-PCR after RNAi knockdown of these genes in the presence of a second RNAi knockdown. The experiment was repeated twice (passage 4, passage 42).
+
+<<Fig. S2: Validation of mRNA levels for double RNAi knockdowns, results=hide>>=
+data("mRNAdoubleKDefficiency", package="RNAinteractMAPK")
+@
+<<Fig. S2: Validation of mRNA levels for double RNAi knockdowns, echo=FALSE, results=hide>>=
+pdf(width=10,height=15, file="Figure-S02-knockdownValidation.pdf")
+trellis.par.set(list(layout.heights = list(bottom.padding = 0, axis.xlab.padding = -2, xlab = 4), 
+                     superpose.symbol = list(col = c("red","blue"))))
+@
+<<Fig. S2: Validation of mRNA levels for double RNAi knockdowns, results=hide>>=
+dp <- dotplot(100-(mRNAdoubleKDefficiency$RNAi) ~ mRNAdoubleKDefficiency$template | 
+  mRNAdoubleKDefficiency$query, groups = mRNAdoubleKDefficiency$passage,  ylim=c(-5,105),
+              main="co-RNAi efficiency", layout = c(2,4),
+              xlab="template dsRNA", ylab="query gene mRNA levels [% remaining after RNAi]",
+              scales=list(x=list(rot=45)),
+              key = simpleKey(c("biol. replicate 1", "biol. replicate 2"),space = "bottom"))
+@ 
+<<Fig. S2: Validation of mRNA levels for double RNAi knockdowns, echo=FALSE, results=hide>>=
+print(dp)
+dev.off()
+@
+
+\begin{center}
+\includegraphics[height=0.5\textheight,width=0.5\textwidth]{Figure-S02-knockdownValidation.pdf}
+\end{center}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection*{Suppl. Figure S3: Single RNAi phenotypes}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Load the data and the plate annotation. The number-of-cells and area features are extracted from the feature set and features are $\log$-transformed.
+
+<<Fig. S3: single RNAi phenotypes, results=hide>>=
+data("singleKDphenotype", package="RNAinteractMAPK")
+singleKDphenotype[,"nrcells"] <- log2(singleKDphenotype[,"nrcells"])
+singleKDphenotype[,"area"] <- log2(singleKDphenotype[,"area"])
+# inputfile <- system.file("extdata","singleKnockDownPhenotype/annoSingleKnockDownEffect.csv",
+#                          package="RNAinteractMAPK")
+# Anno <- read.csv(inputfile,sep=";",stringsAsFactors = FALSE)
+# Anno$Symbol <- substr(Anno$Symbol,1,12)
+# exclude csw, PTP-ER, and puc, because they are measured twice
+# F <- factor(Anno$Symbol[!(Anno$Symbol %in% c("csw_exp2","PTP-ER_exp2","puc_exp2"))])
+# F = factor(Anno$Symbol, levels = unique(Anno$Symbol[!(Anno$Symbol %in% c("csw_exp2","PTP-ER_exp2","puc_exp2"))]))
+@ 
+
+The experiment consisted of 4 plates. Within each plate 4 neighboring wells contained the same RNAi-reagent. Plates 1 and 2 contained the first RNAi design, plates 3 and 4 the second RNAi design for each gene. The data was first reorganized in a matrix with wells in the rows and the 4 plates in columns. The knockdown csw, PTP-ER, and puc were measured twice in the experiment. The second experiment was removed. The data was normalized by subtracting the shorth on each plate. For each gene on each plate the mean value was computed for the four replicates.
+
+
+<<Fig. S3: single RNAi phenotypes, results=hide>>=
+Mean <- list()
+DRho1 <- list()
+Dpnt <- list()
+for (ds in colnames(singleKDphenotype)) {
+  D <- matrix(singleKDphenotype[,ds],nr=384,nc=4)
+  Mean[[ds]] <- matrix(0.0,nr=nlevels(singleKDphenotypeAnno$Symbol),nc=4)
+  row.names(Mean[[ds]]) = levels(singleKDphenotypeAnno$Symbol)
+  DRho1[[ds]] <- D[which(singleKDphenotypeAnno$Symbol == "Rho1"),]
+  Dpnt[[ds]] <- D[which(singleKDphenotypeAnno$Symbol == "pnt"),]
+  for (i in 1:4) {
+    mm <- genefilter:::shorth(D[,i],tie.limit=0.5)
+    DRho1[[ds]][,i] <- DRho1[[ds]][,i] - mm
+    Dpnt[[ds]][,i] <- Dpnt[[ds]][,i] - mm
+    Mean[[ds]][,i] <- tapply(D[,i]-mm,singleKDphenotypeAnno$Symbol,mean)
+  }
+}
+@ 
+Rho1 shows different phenotype than control for nrCells feature.
+<<Fig. S3: single RNAi phenotypes>>=
+t.test(as.vector(DRho1[["nrcells"]]))
+@ 
+Rho1 shows different phenotype than control for area feature.
+<<Fig. S3: single RNAi phenotypes>>=
+t.test(as.vector(DRho1[["area"]]))
+@ 
+pnt shows different phenotype than control for nrCells feature.
+<<Fig. S3: single RNAi phenotypes>>=
+t.test(as.vector(Dpnt[["nrcells"]]))
+@ 
+pnt shows different phenotype than control for area feature.
+<<Fig. S3: single RNAi phenotypes>>=
+t.test(as.vector(Dpnt[["area"]]))
+@ 
+
+Mean and standard deviation were computed for each RNAi design over two replicates.
+
+<<Fig. S3: single RNAi phenotypes, results=hide>>=
+M2 <- list()
+SD2 <- list()
+M3 <- list()
+SD3 <- list()
+
+for (ds in colnames(singleKDphenotype)) {
+  M2[[ds]] <- matrix(NA,nr=nrow(Mean[[ds]]),nc=2)
+  SD2[[ds]] <- matrix(NA,nr=nrow(Mean[[ds]]),nc=2)
+  M2[[ds]][,1] <- apply(Mean[[ds]][,1:2],1,mean)
+  M2[[ds]][,2] <- apply(Mean[[ds]][,3:4],1,mean)
+  SD2[[ds]][,1] <- apply(Mean[[ds]][,1:2],1,sd)
+  SD2[[ds]][,2] <- apply(Mean[[ds]][,3:4],1,sd)
+
+  M3[[ds]] <- apply(M2[[ds]],1,mean)
+  SD3[[ds]] <- apply(M2[[ds]],1,sd)
+}
+@ 
+
+A barplot was plotted for both features.
+
+<<Fig. S3: single RNAi phenotypes, results=hide>>=
+ds <- "nrcells"
+I <- order(-M3[[ds]])
+D <- data.frame(level=c(M2[[ds]][,1],M2[[ds]][,2]),sd=c(SD2[[ds]][,1],SD2[[ds]][,2]), 
+                Gene=factor(rep(row.names(Mean[[ds]]),2), levels=row.names(Mean[[ds]])[I]),
+                design=factor(rep(c("design 1","design 2"),each=nrow(Mean[[ds]])),
+                  levels=c("design 1","design 2")))
+bc <- barchart(level ~ Gene, data = D,
+               layout = c(1,1), origin=0, stack = FALSE, 
+               groups=D$design, col = c("lightblue", "red"),
+               auto.key = list(points = FALSE, rectangles = TRUE, corner=c(0.97,0.97)),
+               par.settings = list(superpose.polygon=list(col=c("lightblue", "red"))),
+               ylab =  "rel. nuclear count [log2]",
+               scales = list(x = list(cex=0.7,rot = 45), y=list(tick.number=9)),
+               xlab="Gene",
+               sub = "error bars: standard deviation", col.sub = "gray40",
+               main = "Phenotypic Knock-Down Effect (viability)",
+               panel=function(...) {
+                 panel.abline(h=c(-2,-1.5,-1,-0.5,0,0.5),lty="dotted")
+                 panel.abline(h=0)
+                 pbc = panel.barchart(...)
+                 x = (as.integer(D$Gene) + 0.375 * (as.integer(D$design) - (2 + 1)/2))
+                 y1 = D$level - D$sd
+                 y2 = D$level + D$sd
+                 panel.arrows(x,y1,x,y2,code=3,angle=90,length=0.03,col="gray40")
+               } )
+@ 
+<<Fig. S3: single RNAi phenotypes, echo=FALSE, results=hide>>=
+pdf(width=13,height=7,file="Figure-S03-singleKnockdownPhenotypeNrCells.pdf")
+print(bc)
+dev.off()
+@ 
+
+\includegraphics[width=\textwidth]{Figure-S03-singleKnockdownPhenotypeNrCells.pdf}
+
+<<Fig. S3: single RNAi phenotypes, results=hide>>=
+ds <- "area"
+I <- order(-M3[[ds]])
+D <- data.frame(level=c(M2[[ds]][,1],M2[[ds]][,2]),sd=c(SD2[[ds]][,1],SD2[[ds]][,2]), 
+                Gene=factor(rep(row.names(Mean[[ds]]),2), levels=row.names(Mean[[ds]])[I]),
+                design=factor(rep(c("design 1","design 2"),each=nrow(Mean[[ds]])),
+                  levels=c("design 1","design 2")))
+bc <- barchart(level ~ Gene, data = D,
+               layout = c(1,1), origin=0,stack = FALSE, 
+               groups=D$design, col = c("lightblue", "red"),
+               auto.key = list(points = FALSE, rectangles = TRUE, corner=c(0.97,0.97)),
+               par.settings = list(superpose.polygon=list(col=c("lightblue", "red"))),
+               ylab = "relative area [log2]",
+               scales = list(x = list(cex=0.7,rot = 45), y=list(tick.number=9)),
+               xlab="Gene",
+               sub = "error bars: standard deviation", col.sub = "gray40",
+               main = "Phenotypic Knock Down Effect (area)",
+               panel=function(...) {
+                 panel.abline(h=c(-2,-1.5,-1,-0.5,0,0.5),lty="dotted")
+                 panel.abline(h=0)
+                 pbc = panel.barchart(...)
+                 x = (as.integer(D$Gene) + 0.375 * (as.integer(D$design) - (2 + 1)/2))
+                 y1 = D$level - D$sd
+                 y2 = D$level + D$sd
+                 panel.arrows(x,y1,x,y2,code=3,angle=90,length=0.03,col="gray40")
+         } )
+
+@ 
+
+<<Fig. S3: single RNAi phenotypes, echo=FALSE, results=hide>>=
+pdf(width=13,height=7,file="Figure-S03-singleKnockdownPhenotypeArea.pdf")
+print(bc)
+dev.off()
+@ 
+
+\includegraphics[width=\textwidth]{Figure-S03-singleKnockdownPhenotypeArea.pdf}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection*{Suppl. Figure S4: Correlation of different features}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The readout \code{D} normalized by the time-effect and the pairwise interaction score \code{PI} is extracted from the \code{Dmel2PPMAPK}-object. To speed up drawing, only 5000 randomly selected gene pairs are plotted.
+
+<<Fig. S4: Correlation of different features, results=hide>>=
+D <- getData(Dmel2PPMAPK,type="data",screen="mean")[,1,c("nrCells","area","intensity")]
+PI <- getData(Dmel2PPMAPK,type="pi",screen="mean")[,1,c("nrCells","area","intensity")]
+set.seed(491127)
+I <- sample(1:nrow(D),5000)
+@ 
+<<Fig. S4: Correlation of different features, echo=FALSE, results=hide>>=
+pdf(width=15,height=10,file="Figure-S04-correlationBetweenFeatures.pdf")
+vp <- grid::viewport(layout=grid::grid.layout(2,3))
+grid::pushViewport(vp)
+grid::pushViewport(grid::viewport(layout.pos.row=1, layout.pos.col=1))
+@ 
+<<Fig. S4: Correlation of different features, results=hide>>=
+MAPK.smooth.scatter(D[I,"nrCells"], D[I,"area"], respect=FALSE, nrpoints=300,
+                xlab="cell number [log2]", ylab="nuclear area [log2]")
+@ 
+<<Fig. S4: Correlation of different features, echo=FALSE, results=hide>>=
+grid::popViewport()
+grid::pushViewport(grid::viewport(layout.pos.row=1, layout.pos.col=2))
+@ 
+<<Fig. S4: Comparison of different features, results=hide>>=
+MAPK.smooth.scatter(D[I,"nrCells"], D[I,"intensity"], respect=FALSE, nrpoints=300,
+                xlab="cell number [log2]", ylab="mean intensity [log2]")
+@ 
+<<Fig. S4: Correlation of different features, echo=FALSE, results=hide>>=
+grid::popViewport()
+grid::pushViewport(grid::viewport(layout.pos.row=1, layout.pos.col=3))
+@ 
+<<Fig. S4: Correlation of different features, results=hide>>=
+MAPK.smooth.scatter(D[I,"intensity"], D[I,"area"], respect=FALSE, nrpoints=300,
+                xlab="mean intensity [log2]", ylab="nuclear area [log2]")
+@ 
+<<Fig. S4: Correlation of different features, echo=FALSE, results=hide>>=
+grid::popViewport()
+grid::pushViewport(grid::viewport(layout.pos.row=2, layout.pos.col=1))
+@ 
+<<Fig. S4: Correlation of different features, results=hide>>=
+MAPK.smooth.scatter(PI[I,"nrCells"], PI[I,"area"], respect=FALSE, nrpoints=300,
+                xlab="pi-score cell number [log2]", ylab="pi-score nuclear area [log2]")
+@ 
+<<Fig. S4: Correlation of different features, echo=FALSE, results=hide>>=
+grid::popViewport()
+grid::pushViewport(grid::viewport(layout.pos.row=2, layout.pos.col=2))
+@ 
+<<Fig. S4: Correlation of different features, results=hide>>=
+MAPK.smooth.scatter(PI[I,"nrCells"], PI[I,"intensity"], respect=FALSE, nrpoints=300,
+                xlab="pi-score cell number [log2]", ylab="pi-score mean intensity [log2]")
+@ 
+<<Fig. S4: Correlation of different features, echo=FALSE, results=hide>>=
+grid::popViewport()
+grid::pushViewport(grid::viewport(layout.pos.row=2, layout.pos.col=3))
+@ 
+<<Fig. S4: Correlation of different features, results=hide>>=
+MAPK.smooth.scatter(PI[I,"intensity"], PI[I,"area"], respect=FALSE, nrpoints=300,
+                xlab="pi-score mean intensity [log2]", ylab="pi-score nuclear area [log2]")
+@ 
+<<Fig. S4: Correlation of different features, echo=FALSE, results=hide>>=
+grid::popViewport()
+grid::popViewport()
+dev.off()
+@ 
+
+\includegraphics[width=\textwidth]{Figure-S04-correlationBetweenFeatures.pdf}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection*{Suppl. Figure S5:}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+For $6\times 6$ gene pairs a dilution series was done. For each gene pair, $8\times 8$ different pairs of dsRNA concentration (0 ng,10 ng,20 ng,40 ng,80 ng,100 ng,120 ng,140 ng) were tested. The readout is first reshaped into a 5-dimensional array \code{A} (features$\times$gene1$\times$gene2$\times$concentration1$\times$concentration2).
+
+<<Fig. S5: Genetic interaction surfaces, results=hide>>=
+data("dsRNAiDilutionSeries")
+dsRNAiDilutionSeries[,"nrCells"] <- log2(dsRNAiDilutionSeries[,"nrCells",drop=FALSE])
+A <- MAPK.screen.as.array(dsRNAiDilutionSeries, dsRNAiDilutionSeriesAnno)
+@ 
+
+To reduce measurement noise the $8\times 8$ concentration dependent feature surfaces are smoothed by thin plate splines. Cross validation is performed to estimate the degree of freedom for each feature surface.  Since this process is quite time consuming you don't need to run the next code chunk, but can load a precomputed tables as is shown in the subsequent code chunk.
+
+<<Fig. S5: Genetic interaction surfaces, eval=FALSE>>= 
+set.seed(491127)
+# warning: Very time consuming. Go on with next code chunk and load precomputed values.
+dsRNAiDilutionSeriesDF <- MAPK.cv.TPS(A)
+write.table(dsRNAiDilutionSeriesDF, file="Figure-S06-resCV.txt", sep="\t", quote=FALSE)
+@ 
+Together with the data a matrix \code{dsRNAiDilutionSeriesDF} with precomputed degrees of freedom is already loaded.
+
+For the high resolution images in Figure 1, a thin plate spline model was fitted in the interaction surface. The interactions were estimated and the surface was screend on a $50\times 50$ grid.
+
+<<Fig. S5: Genetic interaction surfaces, results=hide>>=
+TPSmodel <- MAPK.estimate.TPS(A, DF=dsRNAiDilutionSeriesDF, n.out=50)
+@ 
+<<Fig. S5: Genetic interaction surfaces, echo=FALSE, results=hide>>=
+pdf(file="Figure-1-a-Ras85D-CG13197.pdf")
+@ 
+<<Fig. S5: Genetic interaction surfaces, results=hide>>=
+print(MAPK.plot.TPS.single(gene1="Ras85D", gene2="CG13197", TPSmodel=TPSmodel, range=c(-2,2)))
+@ 
+<<Fig. S5: Genetic interaction surfaces, echo=FALSE, results=hide>>=
+dev.off()
+pdf(file="Figure-1-b-Ras85D-Gap1.pdf")
+@ 
+<<Fig. S5: Genetic interaction surfaces, results=hide>>=
+print(MAPK.plot.TPS.single(gene1="Ras85D", gene2="Gap1", TPSmodel=TPSmodel, range=c(-2,2)))
+@ 
+<<Fig. S5: Genetic interaction surfaces, echo=FALSE, results=hide>>=
+dev.off()
+pdf(file="Figure-1-c-Ptp69D-Gap1.pdf")
+@ 
+<<Fig. S5: Genetic interaction surfaces, results=hide>>=
+print(MAPK.plot.TPS.single(gene1="Ptp69D", gene2="Gap1", TPSmodel=TPSmodel, range=c(-2,2)))
+@ 
+<<Fig. S5: Genetic interaction surfaces, echo=FALSE, results=hide>>=
+dev.off()
+@ 
+
+\includegraphics[width=0.32\textwidth]{Figure-1-a-Ras85D-CG13197.pdf}\hfill
+\includegraphics[width=0.32\textwidth]{Figure-1-b-Ras85D-Gap1.pdf}\hfill
+\includegraphics[width=0.32\textwidth]{Figure-1-c-Ptp69D-Gap1.pdf}
+
+To show a table with all $6\times 6$ genetic interaction surfaces, we screen the estimated interaction surfaces with a lower rate ($25\times 25$ grid). 
+
+<<Fig. S5: Genetic interaction surfaces, echo=FALSE, results=hide>>=
+TPSmodel <- MAPK.estimate.TPS(A, DF=dsRNAiDilutionSeriesDF, n.out=25)
+@ 
+<<Fig. S5: Genetic interaction surfaces, echo=FALSE, results=hide>>=
+pdf(width=12, height=12, file="Figure-S05-geneticInteractionSurfaces.pdf")
+@ 
+<<Fig. S5: Genetic interaction surfaces, results=hide>>=
+print(MAPK.plot.TPS.all(TPSmodel=TPSmodel, range=c(-2,2)))
+@ 
+<<Fig. S5: Genetic interaction surfaces, echo=FALSE, results=hide>>=
+dev.off()
+@ 
+
+\begin{center}
+\includegraphics[width=0.5\textwidth]{Figure-S05-geneticInteractionSurfaces.pdf}
+\end{center}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection*{Suppl. Figure S6, S7, S8:}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+All heatmaps show the same ordering of genes which is derived from the clustering of the genetic interaction matrix for the cell number feature. In Figure 2, the number-of-cells interaction matrix is plotted completely. From the area and intensity matrix only the rows containing the RasMAPK and JNK pathway members are shown.
+
+<<Fig. S6 S7 S8 2: Heatmaps, results=hide>>=
+PInrcells <- getData(Dmel2PPMAPK,type="pi",format="targetMatrix",screen="mean",
+                     channel="nrCells",withoutgroups=c("pos","neg"))
+PIarea <- getData(Dmel2PPMAPK,type="pi",format="targetMatrix",screen="mean",
+                  channel="area",withoutgroups=c("pos","neg"))
+PIintensity <- getData(Dmel2PPMAPK,type="pi",format="targetMatrix",screen="mean",
+                       channel="intensity",withoutgroups=c("pos","neg"))
+
+PC = embedPCA(Dmel2PPMAPK, screen="mean", channel="nrCells", dim=4, withoutgroups=c("pos","neg"))
+hc = hclust(dist(PC))
+hc <- RNAinteract:::swaptree(hc, 92)
+
+subset1 <- row.names(PInrcells)[hc$order[1:6]]
+subset2 <- row.names(PInrcells)[hc$order[74:93]]
+allgenes <- row.names(PInrcells)[hc$order]
+@ 
+<<Fig. S6 S7 S8 2: Heatmaps, echo=FALSE, results=hide>>=
+pdf(width=7, height=0.5, file="Figure-2-a-dendrogram.pdf")
+@ 
+<<Fig. S6 S7 S8 2: Heatmaps, results=hide>>=
+RNAinteract:::grid.sgiDendrogram(hc = hc)
+@ 
+<<Fig. S6 S7 S8 2: Heatmaps, echo=FALSE, results=hide>>=
+dev.off()
+pdf(width=7,height=7,file="Figure-2-b-heatmap-nrCells.pdf")
+@ 
+<<Fig. S6 S7 S8 2: Heatmaps, results=hide>>=
+MAPK.plot.heatmap.raster(PInrcells, subset=allgenes, hc.row = hc, hc.col=hc, pi.max=0.05)
+@ 
+<<Fig. S6 S7 S8 2: Heatmaps, echo = FALSE, results=hide>>=
+dev.off()
+pdf(width=7,height=7*20/93,file="Figure-2-c-heatmap-area-RasMAPK.pdf")
+@ 
+<<Fig. S6 S7 S8 2: Heatmaps, results=hide>>=
+MAPK.plot.heatmap.raster(PIarea, subset=subset2, hc.row = hc, hc.col=hc, pi.max=0.02)
+@ 
+<<Fig. S6 S7 S8 2: Heatmaps, echo = FALSE, results=hide>>=
+dev.off()
+pdf(width=7,height=7*6/93,file="Figure-2-d-heatmap-area-JNK.pdf")
+@ 
+<<Fig. S6 S7 S8 2: Heatmaps, results=hide>>=
+MAPK.plot.heatmap.raster(PIarea, subset=subset1, hc.row = hc, hc.col=hc, pi.max=0.02)
+@ 
+<<Fig. S6 S7 S8 2: Heatmaps, echo = FALSE, results=hide>>=
+dev.off()
+pdf(width=7,height=7*20/93,file="Figure-2-e-heatmap-intensity-RasMAPK.pdf")
+@ 
+<<Fig. S6 S7 S8 2: Heatmaps, results=hide>>=
+MAPK.plot.heatmap.raster(PIintensity, subset=subset2, hc.row = hc, hc.col=hc, pi.max=0.02)
+@ 
+<<Fig. S6 S7 S8 2: Heatmaps, echo = FALSE, results=hide>>=
+dev.off()
+pdf(width=7,height=7*6/93,file="Figure-2-f-heatmap-intensity-JNK.pdf")
+@ 
+<<Fig. S6 S7 S8 2: Heatmaps, results=hide>>=
+MAPK.plot.heatmap.raster(PIintensity, subset=subset1, hc.row = hc, hc.col=hc, pi.max=0.02)
+@ 
+<<Fig. S6 S7 S8 2: Heatmaps, echo = FALSE, results=hide>>=
+dev.off()
+@ 
+
+\begin{center}
+  \includegraphics[width=0.4\textwidth]{Figure-2-a-dendrogram.pdf}\\
+  \includegraphics[width=0.4\textwidth]{Figure-2-b-heatmap-nrCells.pdf}\\[1ex]
+  \includegraphics[width=0.4\textwidth]{Figure-2-c-heatmap-area-RasMAPK.pdf}\\[1ex]
+  \includegraphics[width=0.4\textwidth]{Figure-2-d-heatmap-area-JNK.pdf}\\[1ex]
+  \includegraphics[width=0.4\textwidth]{Figure-2-e-heatmap-intensity-RasMAPK.pdf}\\[1ex]
+  \includegraphics[width=0.4\textwidth]{Figure-2-f-heatmap-intensity-JNK.pdf}
+\end{center}
+
+The supplemental figures S6, S7, and S8 show the complete interaction matrices for the three features nrCells, area, and intensity. The ordering of genes is the same in all three heatmaps. They are ordered  according to a clustering of the nrCells interaction map.
+ 
+<<Fig. S6 S7 S8 2: Heatmaps, echo=FALSE, results=hide>>=
+pdf(width=19, height=17, file="Figure-S6-heatmap-nrCells.pdf")
+@ 
+<<Fig. S6 S7 S8 2: Heatmaps, results=hide>>=
+grid.sgiHeatmap(PInrcells, pi.max=0.2, 
+                main=expression(paste("number cells ", pi,"-score")), hc.row = hc, hc.col = hc)
+@ 
+<<Fig. S6 S7 S8 2: Heatmaps, echo=FALSE, results=hide>>=
+dev.off()
+pdf(width=19, height=17, file="Figure-S7-heatmap-area.pdf")
+@ 
+<<Fig. S6 S7 S8 2: Heatmaps, results=hide>>=
+grid.sgiHeatmap(PIarea, pi.max=0.5, 
+                main=expression(paste("area ", pi,"-score")), hc.row = hc, hc.col = hc)
+@ 
+<<Fig. S6 S7 S8 2: Heatmaps, echo=FALSE, results=hide>>=
+dev.off()
+pdf(width=19, height=17, file="Figure-S8-heatmap-intensity.pdf")
+@ 
+<<Fig. S6 S7 S8 2: Heatmaps, results=hide>>=
+grid.sgiHeatmap(PIintensity, pi.max=0.5, 
+                main=expression(paste("intensity ", pi,"-score")), hc.row = hc, hc.col = hc)
+@ 
+<<Fig. S6 S7 S8 2: Heatmaps, echo=FALSE, results=hide>>=
+dev.off()
+@ 
+
+\begin{center}
+  \includegraphics[width=0.32\textwidth]{Figure-S6-heatmap-nrCells.pdf}
+  \includegraphics[width=0.32\textwidth]{Figure-S7-heatmap-area.pdf}
+  \includegraphics[width=0.32\textwidth]{Figure-S8-heatmap-intensity.pdf}
+\end{center}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection*{Suppl. Figure S9: Correlation of features across replicates}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Scatter plots of read-out for number-of-cells feature. A scatter plot is shown for within-screen replicates, between independent dsRNA designs, and for between-screen replicates. 
+
+<<Fig. S9: Correlation of features across replicates, results=hide>>=
+D <- getData(Dmel2PPMAPK, normalized = TRUE)
+Main <- getMainNeg(Dmel2PPMAPK)
+RepData <- getReplicateData(Dmel2PPMAPK, screen="1", channel="nrCells", type="data",
+                            normalized = TRUE)
+IndDesignData <- getIndDesignData(Dmel2PPMAPK, screen="1", channel="nrCells", type="data",
+                                  normalized = TRUE)
+@ 
+<<Fig. S9: Correlation of features across replicates, echo=FALSE, results=hide>>=
+pdf(width=15,height=18,file="Figure-S09-correlationOfFeaturesBetweenReplicates.pdf")
+vp <- grid::viewport(layout=grid::grid.layout(3,3))
+grid::pushViewport(vp)
+grid::pushViewport(grid::viewport(layout.pos.row=1, layout.pos.col=1))
+@ 
+<<Fig. S9: Correlation of features across replicates, results=hide>>=
+MAPK.smooth.scatter(RepData$x-Main["1","nrCells"], RepData$y-Main["1","nrCells"], 
+                    nrpoints=300,
+                xlab=c("rel. cell number [log2]", "replicate 1", 
+                  sprintf("cor = %0.3f", cor(RepData$x,RepData$y))),
+                ylab=c("rel. cell number [log2]", "replicate 2"),respect=TRUE)
+@ 
+<<Fig. S9: Correlation of features across replicates, echo=FALSE, results=hide>>=
+grid::popViewport()
+grid::pushViewport(grid::viewport(layout.pos.row=1, layout.pos.col=2))
+@ 
+<<Fig. S9: Correlation of features across replicates, results=hide>>=
+MAPK.smooth.scatter(IndDesignData$x-Main["1","nrCells"], IndDesignData$y-Main["1","nrCells"], 
+                    nrpoints=300,
+                xlab=c("rel. cell number [log2]", "RNAi design 1", 
+                  sprintf("cor = %0.3f", cor(IndDesignData$x,IndDesignData$y))),
+                ylab=c("rel. cell number [log2]", "RNAi design 2"),respect=TRUE)
+@ 
+<<Fig. S9: Correlation of features across replicates, echo=FALSE, results=hide>>=
+grid::popViewport()
+grid::pushViewport(grid::viewport(layout.pos.row=1, layout.pos.col=3))
+@ 
+<<Fig. S9: Correlation of features across replicates, results=hide>>=
+MAPK.smooth.scatter(D[,"1","nrCells"]-Main["1","nrCells"], D[,"2","nrCells"]-Main["2","nrCells"], 
+                    nrpoints=300,
+                xlab=c("rel. cell number [log2]", "screen 1", 
+                  sprintf("cor = %0.3f", cor(D[,"1","nrCells"],D[,"2","nrCells"]))),
+                ylab=c("rel. cell number [log2]", "screen 2"),respect=TRUE)
+@ 
+
+In the same way the scatter plots for area and intensity features were generated.
+
+<<Fig. S9: Correlation of features across replicates, echo=FALSE, results=hide>>=
+grid::popViewport()
+@ 
+<<Fig. S9: Correlation of features across replicates, echo=FALSE, results=hide>>=
+# scatter plots for area feature
+RepData <- getReplicateData(Dmel2PPMAPK, screen="1", channel="area", type="data",
+                            normalized = TRUE)
+IndDesignData <- getIndDesignData(Dmel2PPMAPK, screen="1", channel="area", type="data",
+                                  normalized = TRUE)
+grid::pushViewport(grid::viewport(layout.pos.row=2, layout.pos.col=1))
+MAPK.smooth.scatter(RepData$x-Main["1","area"], RepData$y-Main["1","area"], nrpoints=300,
+                xlab=c("rel. cell number [log2]", "replicate 1", 
+                  sprintf("cor = %0.3f", cor(RepData$x,RepData$y))),
+                ylab=c("rel. cell number [log2]", "replicate 2"),respect=TRUE)
+grid::popViewport()
+@ 
+<<Fig. S9: Correlation of features across replicates, echo=FALSE, results=hide>>=
+grid::pushViewport(grid::viewport(layout.pos.row=2, layout.pos.col=2))
+MAPK.smooth.scatter(IndDesignData$x-Main["1","area"], IndDesignData$y-Main["1","area"], nrpoints=300,
+                xlab=c("rel. cell number [log2]", "RNAi design 1", 
+                  sprintf("cor = %0.3f", cor(IndDesignData$x,IndDesignData$y))),
+                ylab=c("rel. cell number [log2]", "RNAi design 2"),respect=TRUE)
+grid::popViewport()
+@ 
+<<Fig. S9: Correlation of features across replicates, echo=FALSE, results=hide>>=
+grid::pushViewport(grid::viewport(layout.pos.row=2, layout.pos.col=3))
+MAPK.smooth.scatter(D[,"1","area"]-Main["1","area"], D[,"2","area"]-Main["2","area"], nrpoints=300,
+                xlab=c("rel. cell number [log2]", "screen 1", 
+                  sprintf("cor = %0.3f", cor(D[,"1","area"],D[,"2","area"]))),
+                ylab=c("rel. cell number [log2]", "screen 2"),respect=TRUE)
+grid::popViewport()
+@ 
+<<Fig. S9: Correlation of features across replicates, echo=FALSE, results=hide>>=
+# scatter plots for intensity feature
+RepData <- getReplicateData(Dmel2PPMAPK, screen="1", channel="intensity", type="data",
+                            normalized = TRUE)
+IndDesignData <- getIndDesignData(Dmel2PPMAPK, screen="1", channel="intensity", type="data",
+                                  normalized = TRUE)
+grid::pushViewport(grid::viewport(layout.pos.row=3, layout.pos.col=1))
+MAPK.smooth.scatter(RepData$x-Main["1","intensity"], RepData$y-Main["1","intensity"], nrpoints=300,
+                xlab=c("rel. cell number [log2]", "replicate 1", 
+                  sprintf("cor = %0.3f", cor(RepData$x,RepData$y))),
+                ylab=c("rel. cell number [log2]", "replicate 2"),respect=TRUE)
+grid::popViewport()
+@ 
+<<Fig. S9: Correlation of features across replicates, echo=FALSE, results=hide>>=
+grid::pushViewport(grid::viewport(layout.pos.row=3, layout.pos.col=2))
+MAPK.smooth.scatter(IndDesignData$x-Main["1","intensity"], IndDesignData$y-Main["1","intensity"], nrpoints=300,
+                xlab=c("rel. cell number [log2]", "RNAi design 1", 
+                  sprintf("cor = %0.3f", cor(IndDesignData$x,IndDesignData$y))),
+                ylab=c("rel. cell number [log2]", "RNAi design 2"),respect=TRUE)
+grid::popViewport()
+@ 
+<<Fig. S9: Correlation of features across replicates, echo=FALSE, results=hide>>=
+grid::pushViewport(grid::viewport(layout.pos.row=3, layout.pos.col=3))
+MAPK.smooth.scatter(D[,"1","intensity"]-Main["1","intensity"], D[,"2","intensity"]-Main["2","intensity"], nrpoints=300,
+                xlab=c("rel. cell number [log2]", "screen 1", 
+                  sprintf("cor = %0.3f", cor(D[,"1","intensity"],D[,"2","intensity"]))),
+                ylab=c("rel. cell number [log2]", "screen 2"),respect=TRUE)
+grid::popViewport(2)
+dev.off()
+@ 
+
+\begin{center}
+\includegraphics[width=0.7\textwidth]{Figure-S09-correlationOfFeaturesBetweenReplicates.pdf}
+\end{center}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection*{Suppl. Figure S10: Correlation of interaction scores across replicates}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Same as Figure S9, but for interaction scores.
+
+<<Fig. S10: Correlation of interactions across replicates, results=hide>>=
+D <- getData(Dmel2PPMAPK, type="pi", normalized = TRUE)
+RepData <- getReplicateData(Dmel2PPMAPK, screen="1", channel="nrCells", type="pi",
+                            normalized = TRUE)
+IndDesignData <- getIndDesignData(Dmel2PPMAPK, screen="1", channel="nrCells", type="pi", 
+                                  normalized = TRUE)
+@ 
+<<Fig. S10: Correlation of interactions across replicates, echo=FALSE, results=hide>>=
+pdf(width=15,height=6,file="Figure-S10-correlationOfInteractionsBetweenReplicates.pdf")
+vp <- grid::viewport(layout=grid::grid.layout(1,3))
+grid::pushViewport(vp)
+grid::pushViewport(grid::viewport(layout.pos.row=1, layout.pos.col=1))
+@ 
+<<Fig. S10: Correlation of interactions across replicates, results=hide>>=
+MAPK.smooth.scatter(RepData$x, RepData$y,nrpoints=300,
+                xlab=c("rel. cell number [log2]", "replicate 1", 
+                  sprintf("cor = %0.3f", cor(RepData$x, RepData$y))),
+                ylab=c("rel. cell number [log2]", "replicate 2"),respect=TRUE)
+@ 
+<<Fig. S10: Correlation of interactions across replicates, echo=FALSE, results=hide>>=
+grid::popViewport()
+grid::pushViewport(grid::viewport(layout.pos.row=1, layout.pos.col=2))
+@ 
+<<Fig. S10: Correlation of interactions across replicates, results=hide>>=
+MAPK.smooth.scatter(IndDesignData$x, IndDesignData$y,nrpoints=300,
+                xlab=c("rel. cell number [log2]", "RNAi design 1",
+                  sprintf("cor = %0.3f", cor(IndDesignData$x, IndDesignData$y))),
+                ylab=c("rel. cell number [log2]", "RNAi design 2"),respect=TRUE)
+
+<<Fig. S10: Correlation of interactions across replicates, echo=FALSE, results=hide>>=
+grid::popViewport()
+grid::pushViewport(grid::viewport(layout.pos.row=1, layout.pos.col=3))
+@ 
+<<Fig. S10: Correlation of interactions across replicates, results=hide>>=
+MAPK.smooth.scatter(D[,"1","nrCells"], D[,"2","nrCells"], nrpoints=300,
+                xlab=c("rel. cell number [log2]", "screen 1", 
+                  sprintf("cor = %0.3f", cor(D[,"1","nrCells"], D[,"2","nrCells"]))),
+                ylab=c("rel. cell number [log2]", "screen 2"),respect=TRUE)
+@ 
+<<Fig. S10: Correlation of interactions across replicates, echo=FALSE, results=hide>>=
+grid::popViewport(2)
+dev.off()
+@ 
+
+\includegraphics[width=0.7\textwidth]{Figure-S10-correlationOfInteractionsBetweenReplicates.pdf}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection*{Suppl. Figure S11, Figure 4 b: Node degree distributions}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+For each gene the number of positively and negatively interacting genes (on a global 5\% FDR) is computed and summarized in a histogram.
+
+<<Fig. S11: Node degree distributions>>=
+screen = "mean"
+for (channel in c("nrCells","area","intensity")) {
+  filename <- switch(channel,
+                     nrCells="Figure-4-b-nodeDegreeNrCells.pdf",
+                     area="Figure-S11-a-nodeDegreeArea.pdf",
+                     intensity="Figure-S11-b-nodeDegreeIntensity.pdf")
+  main <- sprintf("node degree distribution (%s)",
+                  switch(channel, nrCells = "nuclear count", area = "area", intensity = "intensity"))
+
+  q = 0.05
+  by = 3
+  col = c("blue","yellow")
+
+  QV = getData(Dmel2PPMAPK, type="q.value", format="targetMatrix", screen=screen, channel=channel, 
+    withoutgroups=c("pos","neg"))
+  PI = getData(Dmel2PPMAPK, type="pi",      format="targetMatrix", screen=screen, channel=channel, 
+    withoutgroups=c("pos","neg"))
+  M = getMain(Dmel2PPMAPK,type="main",design="template",summary="target",
+    withoutgroups=c("pos","neg"), screen=screen,channel=channel)
+
+  A.pos = (QV <= q) & (PI > 0)
+  A.neg = (QV <= q) & (PI < 0)
+  
+  diag(A.pos) = FALSE
+  diag(A.neg) = FALSE
+  
+  a.pos = apply(A.pos,1,sum)
+  a.neg = apply(A.neg,1,sum)
+  A = A.pos | A.neg
+  a = apply(A,1,sum)
+
+  pdf(width=4.5,height=4.5,file=filename)
+  mv = max(c(a.pos,a.neg))
+  breaks = c(-0.5,seq(0.5,mv-0.5,by=3),mv+0.5)
+  h=0
+  T = matrix(c(0,1),nr=1,nc=2)
+  z=1
+  if (by > 1) {
+    names.arg = c("0")
+    for (i in 3:length(breaks)) {
+      names.arg = c(names.arg,sprintf("%d-%d",h+1,h+by))
+      z=z+1
+      for (j in 1:by) {
+        T = rbind(T, c(h+j,z))
+      }
+      h = h + by
+    }
+  }
+  h.a.pos = hist(a.pos,breaks=breaks,plot=FALSE)
+  h.a.neg = hist(a.neg,breaks=breaks,plot=FALSE)
+  df = data.frame(pos = h.a.pos$counts/92, neg = h.a.neg$counts/92, names=names.arg)
+  df[1,1] = df[1,2] = 0
+  bp=barplot(t(as.matrix(df[,c(2,1)])),beside=TRUE,col=col,main=main, 
+    xlab="number of interactions per gene", ylab="fraction of genes",
+    cex.axis=1,cex.names=1,yaxt="n")
+  axis(2,at=c(0,0.05,0.1,0.15,0.2,0.25,0.3,0.35,0.4),
+       labels=c("0%","","10%","","20%","","30%","",""))
+  rect(1.5,0,2.5,sum(a==0)/92,col="black")
+  mtext(names.arg,side=1,at=apply(bp,2,mean),cex=1,line=c(1.5,0.5))
+  legend("topright",c("neg. interactions", "pos. interactions"), fill=col)
+  dev.off()
+}
+@
+
+\includegraphics[width=0.31\textwidth]{Figure-4-b-nodeDegreeNrCells.pdf}\hfill
+\includegraphics[width=0.31\textwidth]{Figure-S11-a-nodeDegreeArea.pdf}\hfill
+\includegraphics[width=0.31\textwidth]{Figure-S11-b-nodeDegreeIntensity.pdf}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection*{Suppl. Figure S12: Comparison to known interactions from DroID}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+The \code{data.frame Networks} contains the list of interactions reported in DroID (version 2010\_10) resticted to the gene considered in this paper. \code{reportNetworks} computes p-values with the exact Fisher test on the set of interactions with FDR 5\%. 
+
+<<Fig. S12: Comparison to known interactions from DroID, results=hide>>=
+data("Networks", package="RNAinteractMAPK")
+reportNetworks(sgisubset(Dmel2PPMAPK, screen="mean"), Networks = Networks)
+@ 
+The p-values are written to a text file.
+<<Fig. S12: Comparison to known interactions from DroID>>=
+print(read.table("networks/networks-pv-mean-nrCells.txt", sep="\t", header=TRUE))
+print(read.table("networks/networks-pv-mean-area.txt", sep="\t", header=TRUE))
+print(read.table("networks/networks-pv-mean-intensity.txt", sep="\t", header=TRUE))
+@ 
+
+\begin{center}
+  \includegraphics[width=0.2\textwidth]{networks/networks-ballon_mean_nrCells_correlation.pdf}
+  \includegraphics[width=0.2\textwidth]{networks/networks-ballon_mean_nrCells_genetic.pdf}
+  \includegraphics[width=0.2\textwidth]{networks/networks-ballon_mean_nrCells_human.pdf}\\
+  \includegraphics[width=0.2\textwidth]{networks/networks-ballon_mean_area_correlation.pdf}
+  \includegraphics[width=0.2\textwidth]{networks/networks-ballon_mean_area_genetic.pdf}
+  \includegraphics[width=0.2\textwidth]{networks/networks-ballon_mean_area_human.pdf}\\
+  \includegraphics[width=0.2\textwidth]{networks/networks-ballon_mean_intensity_correlation.pdf}
+  \includegraphics[width=0.2\textwidth]{networks/networks-ballon_mean_intensity_genetic.pdf}
+  \includegraphics[width=0.2\textwidth]{networks/networks-ballon_mean_intensity_human.pdf}
+\end{center}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection*{Suppl. Figure S13: Known protein-protein interactions are overrepresented}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The genetic interactions (FDR 5\%) are compared to known physical interactions between the genes. Since the DroID database only reports 3 physical interactions among the considered genes, all direct links on the RasMAPK and JNK pathways are regarded as known physical interactions. Since, in the genetic interaction screen, there are much more interactions within the two pathways than between phosphatases, only a subset of the complete genetic interaction matrix is compared. We selected only those gene pairs within one of the two pathways and compared the genetic interactions among these with the physical interactions (direct links on pathway).
+
+At first a complete interaction matrix \code{INT} extracted from the screeen with the entries $-1, 0, 1$ for negative interaction, no interaction, and positive interaction.
+
+<<Fig. S13: Known protein-protein interactions are overrepresented, results=hide>>=
+PI <- getData(Dmel2PPMAPK, type="pi", format="targetMatrix", 
+              screen="mean", channel="nrCells", withoutgroups=c("pos","neg"))
+QV <- getData(Dmel2PPMAPK, type="q.value", format="targetMatrix", 
+              screen="mean", channel="nrCells", withoutgroups=c("pos","neg"))
+INT <- matrix(0, nr=93, nc=93)
+INT[QV <= 0.05] = 1
+INT[(QV <= 0.05) & (PI < 0)] = -1
+diag(INT) <- NA
+@ 
+
+The matrices \code{G1} and \code{G2} contain the information, which genes are part of the RasMAPK or JNK pathway.
+
+<<Fig. S13: Known protein-protein interactions are overrepresented, results=hide>>=
+data("pathwayMembership", package="RNAinteractMAPK")
+G1 <- matrix(pathwayMembership[row.names(PI)], nr=93, nc=93)
+G2 <- t(G1)
+diag(G1) <- diag(G2) <- NA
+@ 
+
+The physical interactions (direct links in the pathways) are loaded and stored in a matrix with 0 for no physical interaction and 1 for interaction.
+
+<<Fig. S13: Known protein-protein interactions are overrepresented, results=hide>>=
+data("PhysicalInteractions", package="RNAinteractMAPK")
+isPP <- matrix(0, nr=93, nc=93, dimnames = list(row.names(PI),row.names(PI)))
+for (i in 1:nrow(PhysicalInteractions)) {
+  isPP[PhysicalInteractions[i,1], PhysicalInteractions[i,2]] <- 1
+  isPP[PhysicalInteractions[i,2], PhysicalInteractions[i,1]] <- 1
+}
+diag(isPP) <- NA
+@ 
+
+The matrices are stored as a data.frame where each row represents one gene pair. The gene pairs within the RasMAPK and JNK pathway are selected.
+
+<<Fig. S13: Known protein-protein interactions are overrepresented, results=hide>>=
+df <- data.frame(int = as.vector(INT), G1 = as.vector(G1), G2 = as.vector(G2), 
+                 isPP = as.vector(isPP))
+df <- df[!is.na(df$G1),]
+df <- df[((df$G1 == "RASMAPK" & df$G2 == "RASMAPK") | (df$G1 == "JNK" & df$G2 == "JNK")),]
+@ 
+
+The continguency table of genetic and physical interactions and Fisher's exact test comparing the two sets of interactions.
+
+<<Fig. S13: Known protein-protein interactions are overrepresented>>=
+t <- table(df[,c(1,4)])
+print(t)
+t3 <- t[2:3,]
+t3[2,] <- t3[2,] + t[1,]
+t3 <- t3 / 2 # the matrix is symetric and contains each gene pair twice
+print(t3)
+fisher.test(t3, alternative="greater")
+@ 
+
+A barplot of the distribution of genetic interactions within the set of gene that physically interact and within the set of genes were we do not have evidence of a physical interactions.
+
+<<Fig. S13: Known protein-protein interactions are overrepresented, echo=FALSE, results=hide>>= 
+pdf(file="Figure-S13-overlapWithPhysicalInteractions.pdf")
+@ 
+<<Fig. S13: Known protein-protein interactions are overrepresented, results=hide>>= 
+t2 <- t
+t2[,1] <- t2[,1] / sum(t2[,1])
+t2[,2] <- t2[,2] / sum(t2[,2])
+t2 <- t2[c(1,3,2),]
+colnames(t2) <- c("no PP interaction", "PP interaction")
+barplot(t2, col=c("blue", "yellow", "gray"), main="overlap with physical interactions")
+@ 
+<<Fig. S13: Known protein-protein interactions are overrepresented, echo=FALSE, results=hide>>= 
+dev.off()
+@ 
+
+\begin{center}
+\includegraphics[width=0.4\textwidth]{Figure-S13-overlapWithPhysicalInteractions.pdf}
+\end{center}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection*{Suppl. Figure S14: Correlation profiles of Cka, Ras85 and bsk}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The Pearson correlation matrix is computed from the interaction scores. The correlation profile of bsk (JNK pathway) and Ras85D (RasMAPK pathway) are plotted against the correlation profile of Cka.
+
+<<Fig. S14: Correlation profiles of Cka Ras85D and bsk, results=hide>>=
+PI <- getData(Dmel2PPMAPK, type="pi", format="targetMatrix", screen="mean", channel="nrCells",
+              withoutgroups = c("pos", "neg"))
+C = cor(PI)
+<<Fig. S14: Correlation profiles of Cka Ras85D and bsk, echo=FALSE, results=hide>>=
+pdf(width=10,height=10,file="Figure-S14-a-correlationProfile-Cka-Ras85D.pdf")
+@ 
+<<Fig. S14: Correlation profiles of Cka Ras85D and bsk, results=hide>>=
+plot(C["Cka",], C["Ras85D",], pch=20, cex=2, xlim=c(-1,1), ylim=c(-1,1),
+     cex.axis=2, cex.lab=2,
+     xlab="correlation to Cka interaction profile", 
+     ylab="correlation to Ras85D interaction profile")
+@ 
+<<Fig. S14: Correlation profiles of Cka Ras85D and bsk, echo=FALSE, results=hide>>=
+lines(c(-1,1),c(0,0),col="darkgray",lwd=2)
+lines(c(0,0),c(-1,1),col="darkgray",lwd=2)
+I = which((abs(C["Cka",]) > 0.5) | (abs(C["Ras85D",]) > 0.5))
+J = I[C["Cka",I]-C["Ras85D",I] >= 0]
+text(C["Cka",J],C["Ras85D",J],colnames(C)[J],adj=c(-0.2,1.2))
+J = I[C["Cka",I]-C["Ras85D",I] < 0]
+text(C["Cka",J],C["Ras85D",J],colnames(C)[J],adj=c(1.2,-0.2))
+dev.off()
+pdf(width=10,height=10,file="Figure-S14-b-correlationProfile-Cka-bsk.pdf")
+<<Fig. S14: Correlation profiles of Cka Ras85D and bsk, results=hide>>=
+plot(C["Cka",], C["bsk",], pch=20, cex=2, xlim=c(-1,1), ylim=c(-1,1),
+     cex.axis=2, cex.lab=2,
+     xlab="correlation to Cka interaction profile", 
+     ylab="correlation to bsk interaction profile")
+<<Fig. S14: Correlation profiles of Cka Ras85D and bsk, echo=FALSE, results=hide>>=
+lines(c(-1,1),c(0,0),col="darkgray",lwd=2)
+lines(c(0,0),c(-1,1),col="darkgray",lwd=2)
+I = which((abs(C["Cka",]) > 0.5) | (abs(C["bsk",]) > 0.5))
+J = I[C["Cka",I]-C["bsk",I] >= 0]
+text(C["Cka",J],C["bsk",J],colnames(C)[J],adj=c(-0.2,1.2))
+J = I[C["Cka",I]-C["bsk",I] < 0]
+text(C["Cka",J],C["bsk",J],colnames(C)[J],adj=c(1.2,-0.2))
+dev.off()
+@ 
+
+\includegraphics[width=0.5\textwidth]{Figure-S14-a-correlationProfile-Cka-Ras85D.pdf}
+\includegraphics[width=0.5\textwidth]{Figure-S14-b-correlationProfile-Cka-bsk.pdf}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+\subsection*{Suppl. Figure S15: Comparison between Acumen and CellTiterGlo pi-scores}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The pi-score derived in the main screen were compared to the pi-score derived by a CellTiterGlo experiment. The CellTiterGlo validation screen were performed for a small set of gene pairs for this purpose. The CellTiterGlo data were loaded. The screen was performed in triplicates. Each replicate was located on a separate plate. Each gene pair was repeated multiple times within one column. To eliminate plate effects, a median polish was applied. The $\log$-transformed estimated column effects were used for the further analysis. 
+
+<<Fig. S15: Comparison between Acumen and CellTiterGlo pi scores, results=hide>>=
+data("cellTiterGlo", package="RNAinteractMAPK")
+
+M1 <- t(matrix(cellTiterGlo$plate1,nr=24,nc=16))
+M2 <- t(matrix(cellTiterGlo$plate2,nr=24,nc=16))
+M3 <- t(matrix(cellTiterGlo$plate3,nr=24,nc=16))
+MP1 <- medpolish(M1)
+MP2 <- medpolish(M2)
+MP3 <- medpolish(M3)
+
+Anno <- cellTiterGlo[1:24,2:3]
+data <- log2(cbind(MP1$col+MP1$overall, MP2$col+MP2$overall, MP3$col+MP3$overall))
+@ 
+
+The respective values from the main screen were loaded.
+
+<<Fig. S15: Comparison between Acumen and CellTiterGlo pi scores, results=hide>>=
+PIscreen <- Anno[(Anno$dsRNA_1 != "Fluc") & (Anno$dsRNA_2 != "Fluc"),]
+PIscreen$pi.screen <- log2(getData(Dmel2PPMAPK, type="pi", format="targetMatrix",
+channel="nrCells", screen="mean", do.inv.trafo=TRUE)[as.matrix(PIscreen)])
+@
+
+Main effects and pairwise interaction scores are estimated from the CellTiterGlo data and added to the \code{PIscreen} data.frame.
+
+<<Fig. S15: Comparison between Acumen and CellTiterGlo pi scores, results=hide>>=
+result <- data.frame(PIscreen, pi.CTG = 0.0, main1.CTG = 0.0, main2.CTG = 0.0, p.value.CTG = 1.0)
+
+for (i in 1:nrow(PIscreen)) {
+  N <- which((Anno$dsRNA_1 == "Fluc") & (Anno$dsRNA_2 == "Fluc"))
+  doubleRNAi <- which(((Anno$dsRNA_1 == PIscreen[i,1]) & (Anno$dsRNA_2 == PIscreen[i,2]))
+                      | ((Anno$dsRNA_1 == PIscreen[i,2]) & (Anno$dsRNA_2 == PIscreen[i,1])))
+  singleRNAi1 <- which(((Anno$dsRNA_1 == PIscreen[i,1]) & (Anno$dsRNA_2 == "Fluc"))
+                      | ((Anno$dsRNA_1 == "Fluc") & (Anno$dsRNA_2 == PIscreen[i,1])))
+  singleRNAi2 <- which(((Anno$dsRNA_1 == "Fluc") & (Anno$dsRNA_2 == PIscreen[i,2]))
+                      | ((Anno$dsRNA_1 == PIscreen[i,2]) & (Anno$dsRNA_2 == "Fluc")))
+
+  neg <- apply(data[N,],2,mean)
+  main1 <- data[singleRNAi1,] - neg
+  main2 <- data[singleRNAi2,] - neg
+  nimodel <- neg + main1 + main2
+  piCTG <- data[doubleRNAi,] - nimodel
+  pvCTG <- t.test(piCTG)
+  result[i,"pi.CTG"] <- mean(piCTG)
+  result[i,"main1.CTG"] <- mean(main1)
+  result[i,"main2.CTG"] <- mean(main2)
+  result[i,"p.value.CTG"] <- t.test(piCTG)$p.value
+}
+@ 
+
+Finally the $\pi$-score from the main screen is plotted against the $\pi$-score of the CellTitderGlo experiment.
+
+<<Fig. S15: Comparison between Acumen and CellTiterGlo pi scores, echo=FALSE, results=hide>>=
+pdf(file="Figure-S15-correlationAcumenCelTiterGlo.pdf")
+@
+<<Fig. S15: Comparison between Acumen and CellTiterGlo pi scores, results=hide>>=
+plot(result[,"pi.screen"], result[,"pi.CTG"], xlim=c(-0.7,1.2), ylim=c(-0.7, 1.2), pch=19,
+     xlab="pi-score main screen", ylab="pi-score cellTiterGlo",
+     main=sprintf("correlation of pi-score (main screen and cellTiterGlo) = %0.2f",
+       cor(result[,"pi.screen"], result[,"pi.CTG"])))
+@
+<<Fig. S15: Comparison between Acumen and CellTiterGlo pi scores, echo=FALSE, results=hide>>=
+Adj <- matrix(0.0, nr=10, nc=2)
+Adj[,1] <- c(1,      1,    0,    1,   0,   1,    0,   0,   0,   0)
+Adj[,2] <- c(-0.7, 1.7, -0.7, -0.7, 1.7, 1.7, -0.7, 1.7, 1.7, 1.7)
+Adj[,1] <- c(1,      1,    0,    0,   1,   0,    1,   0,   0,   0)
+Adj[,2] <- c(-0.7, 1.7, -0.7,  1.7,-0.7, 1.7,  1.7,-0.7, 1.7, 1.7)
+lines(c(-10, 10), c(0,0), col="gray")
+lines(c(0, 0), c(-10,10), col="gray")
+for (i in 1:10) {
+  text(result[i, "pi.screen"], result[i, "pi.CTG"],
+       sprintf("%s - %s", result$dsRNA_1[i], result$dsRNA_2[i]), adj = Adj[i,])
+}
+dev.off()
+
+@ 
+
+\begin{center}
+\includegraphics[width=0.5\textwidth]{Figure-S15-correlationAcumenCelTiterGlo.pdf}
+\end{center}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Tables}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection*{Suppl. Table 3:}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+The function \code{reportGeneListsPaper} is similar to the \code{reportGeneLists} function in the package \Rpackage{RNAinteract}. It writes tab separated values for each of the three features (nrCells, area, intensity) as well as one text file containing Hotellings $T^2$ p-value.
+
+<<Tab. 3: Interaction lists>>=
+Dmel2PPMAPKT2 <- computePValues(Dmel2PPMAPK, method="HotellingT2", verbose = FALSE)
+Dmel2PPMAPKlimma <- computePValues(Dmel2PPMAPK, method="limma",verbose = FALSE)
+MAPK.report.gene.lists.paper(Dmel2PPMAPK, Dmel2PPMAPKlimma, Dmel2PPMAPKT2)
+head(read.table("Tab3_nrCells.txt", sep="\t", header=TRUE))
+@ 
+
+<<sessioninfo>>=
+sessionInfo()
+@
+
+\end{document}
+
+

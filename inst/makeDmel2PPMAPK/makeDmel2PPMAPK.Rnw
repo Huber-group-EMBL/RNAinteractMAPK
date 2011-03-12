@@ -1,0 +1,115 @@
+%\VignetteIndexEntry{RNAinteractMAPKmakeData}
+%\VignetteKeywords{make binary file for synthetic genetic interactions by RNAi}
+%\VignettePackage{RNAinteractMAPK}
+
+\documentclass[10pt,a4paper]{article}
+
+\RequirePackage{amsfonts,amsmath,amstext,amssymb,amscd}
+\usepackage{graphicx}
+\usepackage{verbatim}
+\usepackage{hyperref}
+\usepackage{color}
+\definecolor{darkblue}{rgb}{0.2,0.0,0.4}
+
+\topmargin -1.5cm
+\oddsidemargin -0cm   % read Lamport p.163
+\evensidemargin -0cm  % same as oddsidemargin but for left-hand pages
+\textwidth 17cm
+\textheight 24.5cm
+\parindent0em
+
+\newcommand{\lib}[1]{{\mbox{\normalfont\textsf{#1}}}}
+\newcommand{\file}[1]{{\mbox{\normalfont\textsf{'#1'}}}}
+\newcommand{\R}{{\mbox{\normalfont\textsf{R}}}}
+\newcommand{\Rfunction}[1]{{\mbox{\normalfont\texttt{#1}}}}
+\newcommand{\Robject}[1]{{\mbox{\normalfont\texttt{#1}}}}
+\newcommand{\Rpackage}[1]{{\mbox{\normalfont\textsf{#1}}}}
+\newcommand{\Rclass}[1]{{\mbox{\normalfont\textit{#1}}}}
+\newcommand{\code}[1]{{\mbox{\normalfont\texttt{#1}}}}
+
+\newcommand{\email}[1]{\mbox{\href{mailto:#1}{\textcolor{darkblue}{\normalfont{#1}}}}}
+\newcommand{\web}[2]{\mbox{\href{#2}{\textcolor{darkblue}{\normalfont{#1}}}}}
+
+\SweaveOpts{keep.source=TRUE,cache=TRUE,eps=FALSE}
+
+\begin{document}
+
+\title{Mapping of Signalling Networks through Synthetic Genetic Interaction Analysis by RNAi}
+
+\author{Bernd Fischer}
+
+\maketitle
+
+\tableofcontents
+
+\section{Loading data and creating an RNAinteract object}
+The package \Rpackage{RNAinteractMAPK} is loaded by the following command.
+
+<<library,results=hide>>=
+library("RNAinteractMAPK")
+@
+
+The package contains the data and the source code for reproducing all figures from the paper {\it Mapping of Signalling Networks through Synthetic Genetic Interaction Analysis by RNAi} by Horn, Sandmann, Fischer, Huber, Boutros, Nature Methods, 2011. Most of the underlying analysis is implemented in the software package \Rpackage{RNAinteract}. Please refer to the \Rpackage{RNAinteract} vignette for further details.
+
+The source code shown in this PDF document shows the essential part of the analysis. Sometimes, some further formatting is needed to produce the plots as shown here; the code for that is not displayed in the PDF, but can be accessed in the source file
+
+<<inputpath, results=hide>>=
+inputpath = system.file("extdata", "Dmel2PPMAPK",package="RNAinteractMAPK")
+@
+
+\section{Main analysis of the synthetic genetic interaction screen}
+\label{mainanalysis}
+
+\subsection{Creation of an RNAinteract object from flat files}
+The directory \code{inputpath} contains five text files:
+
+\code{Platelist.txt}, \code{Targets.txt}, \code{Reagents.txt}, \code{TemplateDesign.txt}, \code{QueryDesign.txt}.
+
+Open these files in a text editor to inspect the file format. The data and annotation are loaded and an \Rclass{RNAinteract} object is created with the following command.
+
+<<createRNAinteract>>=
+Dmel2PPMAPK = createRNAinteractFromFiles(name="Pairwise PPMAPK screen", path = inputpath)
+@
+
+\subsection{Single RNAi effects and pairwise interactions}
+First, the single perturbation effects (called main effects) are estimated from the screen. For each template position and for each query reagent a main effect is estimated.
+
+<<main effects, results=hide>>=
+Dmel2PPMAPK <- estimateMainEffect(Dmel2PPMAPK)
+Dmel2PPMAPK <- normalizeMainEffectQuery(Dmel2PPMAPK,batch=rep(1:4,each=48))
+Dmel2PPMAPK <- normalizeMainEffectTemplate(Dmel2PPMAPK, channel="intensity")
+@
+In our data, the main effect contained apparent time or plate dependent trends. We adjusted and removed them. The normalization of the main effects does not influence the subsequent estimation of the pairwise interaction, but it makes the main effects better comparable between replicates and different screens. Next, the pairwise interaction term was estimated.
+
+<<pairwise interaction term, results=hide>>=
+Dmel2PPMAPK <- computePI(Dmel2PPMAPK)
+@
+
+The object \code{Dmel2PPMAPK} contains two replicate screens. We summarized these two screens by taking the mean value for each measurement and added the mean screen as a new screen to the original screen. 
+
+<<summarize and combine screens, results=hide>>=
+Dmel2PPMAPKmean <- summarizeScreens(Dmel2PPMAPK, screens=c("1","2"))
+Dmel2PPMAPK <- bindscreens(Dmel2PPMAPK, Dmel2PPMAPKmean)
+@
+
+Three different p-values (t-test with pooled variance morderation, \Rpackage{limma}, and multivariate Hotelling $T^2$ test) were computed by
+
+<<compute p-values, results=hide>>=
+Dmel2PPMAPK <- computePValues(Dmel2PPMAPK, verbose = FALSE)
+@
+
+independently for each screen and each channel. 
+
+<<save interaction screen, echo=FALSE>>=
+outputfile <- file.path("..", "..", "data", "Dmel2PPMAPK.rda")
+save(Dmel2PPMAPK, file=outputfile)
+@
+
+<<sessioninfo>>=
+sessionInfo()
+@
+
+
+\end{document}
+
+
