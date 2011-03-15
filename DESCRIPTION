@@ -1,8 +1,8 @@
 Package: RNAinteractMAPK
 Type: Package
 Title: Mapping of Signalling Networks through Synthetic Genetic Interaction Analysis by RNAi
-Version: 0.99.2
-Date: 2011-03-11
+Version: 0.99.3
+Date: 2011-03-15
 Author: Bernd Fischer <bernd.fischer@embl.de>
 Maintainer: Bernd Fischer <bernd.fischer@embl.de>
 Description: This package includes all data used in the paper -Mapping of Signalling Networks through Synthetic Genetic Interaction Analysis by RNAi- by Horn, Sandmann, Fischer et al.., Nat. Methods, 2011. The package vignette shows the R code to reproduce all figures in the paper. 

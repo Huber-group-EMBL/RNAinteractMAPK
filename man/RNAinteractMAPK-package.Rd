@@ -27,6 +27,7 @@ Genetic Interaction Analysis by RNAi. Nature Methods, 2011.
 	\code{\link{mRNAdoubleKDefficiency}} \tab mRNA level after double gene knockdown (used in Figure S1) \cr
 	\code{\link{mRNAsingleKDefficiency}} \tab mRNA level after single gene knockdown (used in Figure S2) \cr
 	\code{\link{singleKDphenotype}} \tab single knockdown phenotypes (used in Figure S3) \cr
+	\code{\link{dsRNAiDilutionSeries}} \tab dsRNA dilution series (used in Figure S5) \cr
   	\code{\link{Networks}} \tab known interactions from DroID (used in Figure S12)  \cr
 	\code{\link{pathwayMembership}} \tab pathway membership of genes (used in Figure S13) \cr
 	\code{\link{PhysicalInteractions}} \tab Known physical interactions (used in Figure S13)  \cr
