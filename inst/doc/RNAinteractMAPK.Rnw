@@ -68,10 +68,9 @@ data("Dmel2PPMAPK", package="RNAinteractMAPK")
 PI <- getData(Dmel2PPMAPK, type="pi", format="targetMatrix", screen="mean", withoutgroups = c("pos", "neg"))
 @ 
 
-If you want to reproduce a single figure you can now immediately jump to the respective section and run the code within one section. The source code shown in this PDF document shows the essential part of the analysis. Sometimes, some further formatting is needed to produce the plots as shown here; the code for that is not displayed in the PDF, but can be accessed in the source file
+If you want to reproduce a single figure you can now immediately jump to the respective section and run the code within one section. The source code shown in this PDF document shows the essential part of the analysis. Sometimes, some further formatting is needed to produce the plots as shown here; the code for that is not displayed in the PDF, but can be accessed in the Sweave file \code{RNAinteractMAPK.Rnw}. The R code is extracted from the Sweave file and written to a file \code{RNAinteractMAPK.R} by
 <<sourecode, eval=FALSE>>=
-Rscript = system.file("doc", "RNAinteractMAPK.R", package="RNAinteractMAPK")
-Rscript
+Stangle(system.file("doc", "RNAinteractMAPK.Rnw", package="RNAinteractMAPK"))
 @ 
 It is an \R-script that reproduces all figures including any formatting steps. In addition it is easier to copy the code out of the R script to the R console when going through this manuscript.
 

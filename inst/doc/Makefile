@@ -2,7 +2,6 @@ all: RNAinteractMAPK clean
 
 RNAinteractMAPK: RNAinteractMAPK.tex
 	texi2dvi --pdf RNAinteractMAPK.tex
-	$(R_HOME)/bin/R CMD Stangle RNAinteractMAPK.Rnw
 
 clean:
 	-$(RM) -f Figure-*
