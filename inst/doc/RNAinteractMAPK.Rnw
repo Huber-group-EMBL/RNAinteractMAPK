@@ -124,12 +124,19 @@ Dmel2PPMAPK <- bindscreens(Dmel2PPMAPK, Dmel2PPMAPKmean)
 Three different p-values (t-test with pooled variance morderation, \Rpackage{limma}, and multivariate Hotelling $T^2$ test) were computed by
 
 <<compute p-values, results=hide>>=
-Dmel2PPMAPK <- computePValues(Dmel2PPMAPK, verbose = FALSE)
-Dmel2PPMAPKT2 <- computePValues(Dmel2PPMAPK, method="HotellingT2", verbose = FALSE)
-Dmel2PPMAPKlimma <- computePValues(Dmel2PPMAPK, method="limma",verbose = FALSE)
+library(qvalue)
+p.adj.fct <- function(x) {
+  I = which(is.finite(x))
+  qjob = qvalue(x[I])
+  q.value = rep(NA,length(x))
+  q.value[I] = qjob$qvalues
+}
+Dmel2PPMAPK <- computePValues(Dmel2PPMAPK, p.adjust.function = p.adj.fct, verbose = FALSE)
+Dmel2PPMAPKT2 <- computePValues(Dmel2PPMAPK, method="HotellingT2", p.adjust.function = p.adj.fct, verbose = FALSE)
+Dmel2PPMAPKlimma <- computePValues(Dmel2PPMAPK, method="limma", p.adjust.function = p.adj.fct, verbose = FALSE)
 @
 
-independently for each screen and each channel. 
+independently for each screen and each channel. The p-values are corrected for multiple testing by the method of Storey, 2003. If the p.adjust.function is not specified, the method of Benjamini-Hochberg is applied.
 
 \section{Main figures}
 \label{mainfigures}
