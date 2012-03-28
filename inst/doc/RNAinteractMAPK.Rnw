@@ -311,6 +311,7 @@ D <- data.frame(mRNAlevel=c(mRNAsingleKDefficiency[,"MeanDesign1"],mRNAsingleKDe
                   levels=mRNAsingleKDefficiency[I,"Symbol"]),
                 design=factor(rep(c("design 1","design 2"),each=89),
                   levels=c("design 1","design 2")))
+library(lattice)
 bc <- barchart(mRNAlevel ~ Gene, data = D,
          layout = c(1,1), origin = 1, stack = FALSE, 
          group = D$design, col = c("lightblue", "red"),
