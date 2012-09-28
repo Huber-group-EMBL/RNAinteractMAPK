@@ -17,7 +17,7 @@ MAPK.getCV <- function(X, y) {
 
   ypred = y
   ypred[] = NA
-  posterior = matrix(NA,nr=length(y),nc=nlevels(y))
+  posterior = matrix(NA,nrow=length(y),ncol=nlevels(y))
   colnames(posterior) = levels(y)
 
   index = rep(0,ncol(X))

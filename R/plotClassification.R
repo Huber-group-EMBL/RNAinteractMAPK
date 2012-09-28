@@ -118,7 +118,7 @@ MAPK.getXY <- function(a, b, c, d = 0.03, shift = 0.2, toleft=TRUE) {
   r=1+d
   I=1:length(a)
   for (i in 1:length(a)) {
-    M = matrix(0,nr=length(I),nc=2)
+    M = matrix(0,nrow=length(I),ncol=2)
     M[,1] = a[I] - l
     M[,2] = r - a[I]
     

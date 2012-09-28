@@ -13,14 +13,14 @@ MAPK.report.gene.lists.paper <- function(sgi, sgilimma, sgi3T2, screen = "mean")
       p.value <- getData(sgi, screen = screen, channel = c, type="p.value", format="targetMatrix")
       q.value.limma <- getData(sgilimma, screen = screen, channel = c, type="q.value", format="targetMatrix")
       p.value.limma <- getData(sgilimma, screen = screen, channel = c, type="p.value", format="targetMatrix")
-      gene1 <- matrix(row.names(p.value),nr=dim(p.value)[1], nc=dim(p.value)[2])
-      gene2 <- matrix(colnames(p.value),nr=dim(p.value)[2], nc=dim(p.value)[1])
+      gene1 <- matrix(row.names(p.value),nrow=dim(p.value)[1], ncol=dim(p.value)[2])
+      gene2 <- matrix(colnames(p.value),nrow=dim(p.value)[2], ncol=dim(p.value)[1])
       gene2 <- t(gene2)
       maint <- getMain(sgi, design="template", screen=screen, channel=c, summary="target")
       mainq <- getMain(sgi, design="query", screen=screen, channel=c, summary="target")
       main = RNAinteract:::invtransform(sgi, 0.5 * (maint + mainq), channel=c)
-      main1 <- matrix(main,nr=dim(p.value)[1], nc=dim(p.value)[2])
-      main2 <- matrix(main,nr=dim(p.value)[2], nc=dim(p.value)[1])
+      main1 <- matrix(main,nrow=dim(p.value)[1], ncol=dim(p.value)[2])
+      main2 <- matrix(main,nrow=dim(p.value)[2], ncol=dim(p.value)[1])
       main2 <- t(main2)
       NI <- getData(sgi, screen = screen, channel = c, type="ni.model", format="targetMatrix", do.inv.trafo=TRUE)
       D <- getData(sgi, screen = screen, channel = c, type="data", format="targetMatrix", do.trafo=FALSE)
@@ -51,8 +51,8 @@ MAPK.report.gene.lists.paper <- function(sgi, sgilimma, sgi3T2, screen = "mean")
       ##                  neg = getMainNeg(sgi, screen=s, channel=c, do.inv.trafo=FALSE),
       ##                  NI = NI.log[UT], Measured = D.log[UT], pi = PI.log[UT])
 
-      isctrl1 <- matrix(names(maint) %in% controls,nr=dim(p.value)[1], nc=dim(p.value)[2])
-      isctrl2 <- matrix(names(maint) %in% controls,nr=dim(p.value)[2], nc=dim(p.value)[1])
+      isctrl1 <- matrix(names(maint) %in% controls,nrow=dim(p.value)[1], ncol=dim(p.value)[2])
+      isctrl2 <- matrix(names(maint) %in% controls,nrow=dim(p.value)[2], ncol=dim(p.value)[1])
       isctrl2 <- t(isctrl2)
       isctrl <- isctrl1[UT] | isctrl2[UT]
 
@@ -101,8 +101,8 @@ MAPK.report.gene.lists.paper <- function(sgi, sgilimma, sgi3T2, screen = "mean")
   c = "nrCells"
   q.value <- getData(sgi3T2, screen = screen, channel = c, type="q.value", format="targetMatrix")
   p.value <- getData(sgi3T2, screen = screen, channel = c, type="p.value", format="targetMatrix")
-  gene1 <- matrix(row.names(p.value),nr=dim(p.value)[1], nc=dim(p.value)[2])
-  gene2 <- matrix(colnames(p.value),nr=dim(p.value)[2], nc=dim(p.value)[1])
+  gene1 <- matrix(row.names(p.value),nrow=dim(p.value)[1], ncol=dim(p.value)[2])
+  gene2 <- matrix(colnames(p.value),nrow=dim(p.value)[2], ncol=dim(p.value)[1])
   gene2 <- t(gene2)
 
   UT <- upper.tri(p.value)
@@ -126,8 +126,8 @@ MAPK.report.gene.lists.paper <- function(sgi, sgilimma, sgi3T2, screen = "mean")
       ##                  neg = getMainNeg(sgi, screen=s, channel=c, do.inv.trafo=FALSE),
       ##                  NI = NI.log[UT], Measured = D.log[UT], pi = PI.log[UT])
 
-  isctrl1 <- matrix(names(maint) %in% controls,nr=dim(p.value)[1], nc=dim(p.value)[2])
-  isctrl2 <- matrix(names(maint) %in% controls,nr=dim(p.value)[2], nc=dim(p.value)[1])
+  isctrl1 <- matrix(names(maint) %in% controls,nrow=dim(p.value)[1], ncol=dim(p.value)[2])
+  isctrl2 <- matrix(names(maint) %in% controls,nrow=dim(p.value)[2], ncol=dim(p.value)[1])
   isctrl2 <- t(isctrl2)
   isctrl <- isctrl1[UT] | isctrl2[UT]
 

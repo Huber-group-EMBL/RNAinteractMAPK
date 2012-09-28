@@ -3,7 +3,7 @@ importFrom(sparseLDA, sda)
 importFrom(grid, viewport, pushViewport, popViewport, upViewport, grid.newpage, grid.layout, grid.raster, grid.points, grid.text, grid.polyline, grid.polygon, grid.lines, grid.rect, grid.xaxis, grid.yaxis, unit, gpar, vpPath, convertWidth)
 importFrom(MASS, kde2d)
 importFrom(gdata, upperTriangle)
-importFrom(crossdes, williams)
+# importFrom(crossdes, williams)
 import(RNAinteract)
 
 

@@ -25,7 +25,7 @@ MAPK.smooth.scatter <- function(x,y,n=75, nrpoints = 100, col="blue", pch=20, si
   colid = sapply(D$z, function(e) { sum(e > at) } )
   colid[colid < 1] = 1
   colid[colid > nc] = nc
-  colid = matrix(colid, nr=nrow(D$z),nc=ncol(D$z))
+  colid = matrix(colid, nrow=nrow(D$z),ncol=ncol(D$z))
   colid = t(colid)
   colid = colid[nrow(colid):1,]
   Img = array(0, dim=c(nrow(D$z),ncol(D$z),3))

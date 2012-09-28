@@ -47,7 +47,7 @@ MAPK.cv.TPS <- function(A, range.df = 6:56, channel=1) {
 
   n.in = 8
 
-  DF <- matrix(0, nr=6, nc=6)
+  DF <- matrix(0, nrow=6, ncol=6)
   CVerror = list()
   CVerrorSD = list()
   for (i in 1:6) {
@@ -60,8 +60,11 @@ MAPK.cv.TPS <- function(A, range.df = 6:56, channel=1) {
       x = rep(d.in,each=n.in)
       y = rep(d.in,times=n.in)
       data = data.frame(x=x,y=y)
-      F = as.vector(williams(8))
-      res = matrix(0.0,nr=64,nc=56)
+      F = c(1, 2, 3, 4, 5, 6, 7, 8, 2, 3, 4, 5, 6, 7, 8, 1, 8, 1, 2, 3, 
+4, 5, 6, 7, 3, 4, 5, 6, 7, 8, 1, 2, 7, 8, 1, 2, 3, 4, 5, 6, 4, 
+5, 6, 7, 8, 1, 2, 3, 6, 7, 8, 1, 2, 3, 4, 5, 5, 6, 7, 8, 1, 2, 
+3, 4)
+      res = matrix(0.0,nrow=64,ncol=56)
       for (f in 1:8) {
         Train = which(F != f)
         Test = which(F == f)
@@ -72,7 +75,7 @@ MAPK.cv.TPS <- function(A, range.df = 6:56, channel=1) {
           res[Test,df] = (znew - z[Test])^2
         }
       }
-      res2 = matrix(0.0,nr=8,nc=56)
+      res2 = matrix(0.0,nrow=8,ncol=56)
       for (df in range.df) {
         res2[,df] = tapply(res[,df],F,mean)
       }
@@ -119,15 +122,15 @@ MAPK.estimate.TPS <- function(A, DF, n.out=8, channel=1) {
       znew = predict(tps,data.frame(x=xnew,y=ynew))
       zpred = predict(tps,data.frame(x=x,y=y))
       
-      Z = matrix(z,nr=n.in,nc=n.in)
-      Znew = matrix(znew,nr=n.out,nc=n.out)
+      Z = matrix(z,nrow=n.in,ncol=n.in)
+      Znew = matrix(znew,nrow=n.out,ncol=n.out)
       res[["smoothed"]][channel,i,j,,] = znew
       
       mainmain = Znew[1,1]
       res[["smoothedfactor"]][channel,i,j,,] = res[["smoothed"]][channel,i,j,,] - mainmain
       main1 = Znew[1,] - mainmain
       main2 = Znew[,1] - mainmain
-      SD = median(abs(matrix(zpred,nr=n.in,nc=n.in) - Z))
+      SD = median(abs(matrix(zpred,nrow=n.in,ncol=n.in) - Z))
       res[["expected"]][channel,i,j,,] = mainmain + rep(main1,each=n.out) + rep(main2,times=n.out)
       res[["diff"]][channel,i,j,,] = Znew - res[["expected"]][channel,i,j,,]
       res[["diffzscore"]][channel,i,j,,] = res[["diff"]][channel,i,j,,] / SD
@@ -201,7 +204,7 @@ MAPK.plot.TPS.single <- function(gene1, gene2, TPSmodel, range=c(-6,6), fill=c("
   ZInteraction[ZInteraction > range[2]] = range[2]
   ZInteraction[ZInteraction < range[1]] = range[1]
   col = colorRampPalette(fill)(513)
-  Col = matrix(col[257],nr=n.out,nc=n.out)
+  Col = matrix(col[257],nrow=n.out,ncol=n.out)
   Col[ZInteraction > zcutoff] = col[floor(257 + 256 * (ZInteraction[ZInteraction > zcutoff] - zcutoff) / (range[2] - zcutoff))]
   Col[ZInteraction < -zcutoff] = col[floor(257 + 256 * (ZInteraction[ZInteraction < -zcutoff] + zcutoff) / (range[2] - zcutoff))]
 

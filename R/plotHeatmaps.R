@@ -25,7 +25,7 @@ MAPK.plot.heatmap.raster <- function(X, subset=NULL, hc.row = NULL, hc.col = NUL
   colid = sapply(X, function(e) { sum(e > at) } )
   colid[colid < 1] = 1
   colid[colid > length(rbcol)] = length(rbcol)
-  colid = matrix(colid, nr=nrow(X),nc=ncol(X))
+  colid = matrix(colid, nrow=nrow(X),ncol=ncol(X))
   colid = colid[nrow(colid):1,]
   Img = array(0, dim=c(nrow(X),ncol(X),3))
   Img[,,1] = C[colid,1]
