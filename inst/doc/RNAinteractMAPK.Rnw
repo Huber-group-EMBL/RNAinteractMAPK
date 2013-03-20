@@ -43,7 +43,16 @@
 \tableofcontents
 
 \section{Introduction}
-The package contains the data from the RNAi interaction screen reported in Horn, Sandmann, Fischer, Huber, Boutros, {\it Mapping of Signalling Networks through Synthetic Genetic Interaction Analysis by RNAi}, Nature Methods, 2011. This vignette shows the R code for ploting all figures in the paper.
+The package contains the data from the RNAi interaction screen reported in
+ \\\\
+\begin{center}
+\begin{minipage}[t]{0.8\textwidth}
+  Thomas Horn, Thomas Sandmann, Bernd Fischer, Elin Axelsson, Wolfgang
+Huber, and Michael Boutros (2011): {\it Mapping of Signalling Networks
+through Synthetic Genetic Interaction Analysis by RNAi}, Nature Methods 8(4): 341-346. \\\\
+\end{minipage}
+\end{center}
+This vignette shows the R code for ploting all figures in the paper.
 
 \section{Installation of the RNAinteractMAPK package}
 To install the package \Rpackage{RNAinteractMAPK}, you need a running version of \R~(www.r-project.org, version $\geq 2.13.0$). After installing \R~you can run the following commands from the \R~command shell to install \Rpackage{RNAinteractMAPK} and all required packages.

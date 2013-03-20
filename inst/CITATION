@@ -1,0 +1,20 @@
+
+citEntry(entry="article",
+  title = "Mapping of signaling networks through synthetic genetic interaction analysis by RNAi",
+  author = personList( as.person("Thomas Horn"), 
+                       as.person("Thomas Sandmann"),
+		       as.person("Bernd Fischer"),
+		       as.person("Elin Axelsson"),
+		       as.person("Wolfgang Huber"),
+		       as.person("Michael Boutros")),
+  journal = "Nature Methods",
+  volume = "8",
+  number = "4",
+  pages = "341--346",
+  year = "2011",
+  publisher = "Nature Publishing Group",
+  textVersion = 
+         paste("Thomas Horn, Thomas Sandmann, Bernd Fischer, Elin Axelsson, Wolfgang Huber, and Michael Boutros (2011):", 
+               "Mapping of signaling networks through synthetic genetic interaction analysis by RNAi.",
+                "Nature Methods 8(4): 341-346" )
+)
