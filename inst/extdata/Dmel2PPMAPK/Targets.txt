@@ -1,0 +1,100 @@
+TID	Symbol	group	GID	AnnotationSymbol	Name
+FBgn0000097	aop	sample	FBgn0000097	CG3166	anterior open
+FBgn0000229	bsk	sample	FBgn0000229	CG5680	basket
+FBgn0000382	csw	sample	FBgn0000382	CG3954	corkscrew
+FBgn0001137	grk	sample	FBgn0001137	CG17610	gurken
+FBgn0001291	Jra	sample	FBgn0001291	CG2275	Jun-related antigen
+FBgn0001297	kay	sample	FBgn0001297	CG33956	kayak
+FBgn0001965	Sos	sample	FBgn0001965	CG7793	Son of sevenless
+FBgn0003079	phl	sample	FBgn0003079	CG2845	pole hole
+FBgn0003118	pnt	sample	FBgn0003118	CG17077	pointed
+FBgn0003177	pyd	sample	FBgn0003177	CG31349	polychaetoid
+FBgn0003205	Ras85D	sample	FBgn0003205	CG9375	Ras oncogene at 85D
+FBgn0003501	Src64B	sample	FBgn0003501	CG7524	Src oncogene at 64B
+FBgn0003502	Btk29A	sample	FBgn0003502	CG8049	Btk family kinase at 29A
+FBgn0004390	Gap1	sample	FBgn0004390	CG6721	GTPase-activating protein 1
+FBgn0004603	Src42A	sample	FBgn0004603	CG7873	Src oncogene at 42A
+FBgn0004638	drk	sample	FBgn0004638	CG6033	downstream of receptor kinase
+FBgn0010269	Dsor1	sample	FBgn0010269	CG15793	Downstream of raf1
+FBgn0010909	msn	sample	FBgn0010909	CG16973	misshapen
+FBgn0014001	Pak	sample	FBgn0014001	CG10295	PAK-kinase
+FBgn0014011	Rac2	sample	FBgn0014011	CG8556	Rac2
+FBgn0014020	Rho1	sample	FBgn0014020	CG8416	Rho1
+FBgn0015295	shark	sample	FBgn0015295	CG18247	Src homology 2, ankyrin repeat, tyrosine kinase
+FBgn0015763	lic	sample	FBgn0015763	CG12244	licorne
+FBgn0016641	PTP-ER	sample	FBgn0016641	CG9856	Protein tyrosine phosphatase-ERK/Enhancer of Ras1
+FBgn0021873	Gef26	sample	FBgn0021873	CG9491	Gef26
+FBgn0024326	Mkk4	sample	FBgn0024326	CG9738	MAP kinase kinase 4
+FBgn0024329	Mekk1	sample	FBgn0024329	CG7717	Mekk1
+FBgn0024846	p38b	sample	FBgn0024846	CG7393	p38b
+FBgn0025743	mbt	sample	FBgn0025743	CG18582	mushroom bodies tiny
+FBgn0026252	msk	sample	FBgn0026252	CG7935	moleskin
+FBgn0026323	Tak1	sample	FBgn0026323	CG18492	TGF-beta activated kinase 1
+FBgn0030018	slpr	sample	FBgn0030018	CG2272	slipper
+FBgn0032006	Pvr	sample	FBgn0032006	CG8222	PDGF- and VEGF-receptor related
+FBgn0033153	Gadd45	sample	FBgn0033153	CG11086	Gadd45
+FBgn0033483	egr	sample	FBgn0033483	CG12919	eiger
+FBgn0039532	Mtl	sample	FBgn0039532	CG5588	Mig-2-like
+FBgn0043364	cbt	sample	FBgn0043364	CG4427	cabut
+FBgn0044323	Cka	sample	FBgn0044323	CG7392	Connector of kinase to AP-1
+FBgn0052179	Krn	sample	FBgn0052179	CG32179	Keren
+FBgn0243512	puc	sample	FBgn0243512	CG7850	puckered
+FBgn0259220	Doa	sample	FBgn0259220	CG42320	Darkener of apricot
+Ctrl_Fluc	Ctrl_Fluc	neg	Ctrl_Fluc	Fluc	Fluc_1
+FBgn0000464	Lar	sample	FBgn0000464	CG10443	Leukocyte-antigen-related-like
+FBgn0002673	twe	sample	FBgn0002673	CG4965	twine
+FBgn0003134	Pp1alpha-96A	sample	FBgn0003134	CG6593	Protein phosphatase 1alpha at 96A
+FBgn0003138	Ptp61F	sample	FBgn0003138	CG9181	Protein tyrosine phosphatase 61F
+FBgn0003139	PpV	sample	FBgn0003139	CG12217	Protein phosphatase V
+FBgn0003525	stg	sample	FBgn0003525	CG1395	string
+FBgn0004177	mts	sample	FBgn0004177	CG7109	microtubule star
+FBgn0004368	Ptp4E	sample	FBgn0004368	CG6899	Protein tyrosine phosphatase 4E
+FBgn0004369	Ptp99A	sample	FBgn0004369	CG11516	Protein tyrosine phosphatase 99A
+FBgn0004370	Ptp10D	sample	FBgn0004370	CG1817	Protein tyrosine phosphatase 10D
+FBgn0005777	PpD3	sample	FBgn0005777	CG8402	Protein phosphatase D3
+FBgn0014007	Ptp69D	sample	FBgn0014007	CG10975	Protein tyrosine phosphatase 69D
+FBgn0016078	wun	sample	FBgn0016078	CG8804	wunen
+Ctrl_Pvr_2	Ctrl_Pvr_2	pos	Ctrl_Pvr_2	CG8222	Pvr_2
+FBgn0022768	Pp2C1	sample	FBgn0022768	CG2984	Protein phosphatase 2C
+FBgn0023508	CG3573	sample	FBgn0023508	CG3573	CG3573
+FBgn0024734	PRL-1	sample	FBgn0024734	CG4993	PRL-1
+FBgn0025742	mtm	sample	FBgn0025742	CG9115	myotubularin
+FBgn0026379	Pten	sample	FBgn0026379	CG5671	Pten
+FBgn0027515	CG7115	sample	FBgn0027515	CG7115	CG7115
+FBgn0028341	l(1)G0232	sample	FBgn0028341	CG32697	lethal (1) G0232
+FBgn0028497	CG3530	sample	FBgn0028497	CG3530	CG3530
+FBgn0029157	ssh	sample	FBgn0029157	CG6238	slingshot
+FBgn0029958	Pdp	sample	FBgn0029958	CG12151	Pyruvate dehydrogenase phosphatase
+FBgn0030556	mRNA-capping-enzyme	sample	FBgn0030556	CG1810	mRNA-capping-enzyme
+FBgn0030735	CG3632	sample	FBgn0030735	CG3632	CG3632
+FBgn0030758	CanA-14F	sample	FBgn0030758	CG9819	Calcineurin A at 14F
+FBgn0030761	CG9784	sample	FBgn0030761	CG9784	CG9784
+FBgn0031044	MKP-4	sample	FBgn0031044	CG14211	MAPK Phosphatase 4
+FBgn0031194	CG17598	sample	FBgn0031194	CG17598	CG17598
+FBgn0031799	Pez	sample	FBgn0031799	CG9493	Pez
+FBgn0031952	cdc14	sample	FBgn0031952	CG7134	cdc14
+FBgn0032702	CG10376	sample	FBgn0032702	CG10376	CG10376
+FBgn0033021	CG10417	sample	FBgn0033021	CG10417	CG10417
+FBgn0034179	CG6805	sample	FBgn0034179	CG6805	CG6805
+FBgn0034691	synj	sample	FBgn0034691	CG6562	synaptojanin
+FBgn0035133	Ptpmeg	sample	FBgn0035133	CG1228	Ptpmeg
+FBgn0035425	CG17746	sample	FBgn0035425	CG17746	CG17746
+FBgn0036273	CG10426	sample	FBgn0036273	CG10426	CG10426
+FBgn0036369	CG10089	sample	FBgn0036369	CG10089	CG10089
+FBgn0036448	mop	sample	FBgn0036448	CG9311	myopic
+FBgn0036551	CG17029	sample	FBgn0036551	CG17029	CG17029
+FBgn0036844	Mkp3	sample	FBgn0036844	CG14080	Mitogen-activated protein kinase phosphatase 3
+FBgn0037063	CG9391	sample	FBgn0037063	CG9391	CG9391
+FBgn0037341	CG12746	sample	FBgn0037341	CG12746	CG12746
+FBgn0039111	Plip	sample	FBgn0039111	CG10371	PTEN-like phosphatase
+FBgn0003256	rl	sample	FBgn0003256	rl	rl
+FBgn0041087	wun2	sample	FBgn0041087	CG8805	wunen-2
+FBgn0043903	dome	sample	FBgn0043903	CG14226	domeless
+FBgn0062449	CG13197	sample	FBgn0062449	CG13197	CG13197
+FBgn0086361	alph	sample	FBgn0086361	CG1906	alphabet
+Ctrl_CSN4_1	Ctrl_CSN4_1	pos	Ctrl_CSN4_1	CG8725	CSN4_1
+FBgn0259178	5PtaseI	sample	FBgn0259178	CG42283	5PtaseI
+FBgn0259227	CG42327	sample	FBgn0259227	CG42327	CG42327
+Ctrl_th_2	Ctrl_th_2	pos	Ctrl_th_2	CG12284	th_2
+Ctrl_CSN3_1	Ctrl_CSN3_1	pos	Ctrl_CSN3_1	CG18332	CSN3_1
+Ctrl_pbl_1	Ctrl_pbl_1	pos	Ctrl_pbl_1	CG8114	pbl_1
