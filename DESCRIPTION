@@ -4,9 +4,9 @@ Title: Mapping of Signalling Networks through Synthetic Genetic Interaction Anal
 Version: 1.29.1
 Authors@R: c(
             person("Bernd", "Fischer", role = "aut"), 
-            person("Wolfgang", "Huber", role="ctb"
+            person("Wolfgang", "Huber", role="ctb",
                 email = "whuber@embl.de"),
-            person("Mike", "Smith", "cre", 
+            person("Mike", "Smith", role = "cre", 
                 email = "mike.smith@embl.de")
             )
 Description: This package includes all data used in the paper -Mapping of Signalling Networks through Synthetic Genetic Interaction Analysis by RNAi- by Horn, Sandmann, Fischer et al.., Nat. Methods, 2011. The package vignette shows the R code to reproduce all figures in the paper. 
