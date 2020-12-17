@@ -8,10 +8,10 @@ This function is a reimplementation of \code{\link{smoothScatter}}. For nicer gr
 }
 \usage{
 MAPK.smooth.scatter(x, y, n = 75,
-                    nrpoints = 100, col = "blue", 
-		    pch = 20, size = unit(0.3, "char"), cex = 1.2,
-		    colramp = colorRampPalette(c("white", "blue", "green", "yellow", "red"))(256),
-		    xlab = "", ylab = "", respect = FALSE)
+    nrpoints = 100, col = "blue", 
+    pch = 20, size = unit(0.3, "char"), cex = 1.2,
+    colramp = colorRampPalette(c("white", "blue", "green", "yellow", "red"))(256),
+    xlab = "", ylab = "", respect = FALSE)
 }
 \arguments{
   \item{x}{x-values.}

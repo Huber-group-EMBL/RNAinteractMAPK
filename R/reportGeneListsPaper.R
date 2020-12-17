@@ -61,10 +61,13 @@ MAPK.report.gene.lists.paper <- function(sgi, sgilimma, sgi3T2, screen = "mean")
       I <- order(pv)
       GL <- GL[I,]
       ## GL.log <- GL.log[I,]
-      GL.text <- GL
-      for (i in 3:10) {
-        GL.text[[i]] <- sprintf("%0.3f",GL.text[[i]])
-      }
+      
+      ## this code block is failing in BioC 3.13, but never seems to be used
+      ## we'll just comment it out - MLS 2020/12/17
+      ##GL.text <- GL
+      ##for (i in 3:10) {
+      ##  GL.text[[i]] <- sprintf("%0.3f",GL.text[[i]])
+      ##}
 
       con <- file(sprintf("Tab3_%s.txt", c), "wb")
       t <- switch(c,
@@ -136,10 +139,13 @@ MAPK.report.gene.lists.paper <- function(sgi, sgilimma, sgi3T2, screen = "mean")
   I <- order(pv)
   GL <- GL[I,]
   ## GL.log <- GL.log[I,]
-  GL.text <- GL
-  for (i in 3:10) {
-    GL.text[[i]] <- sprintf("%0.3f",GL.text[[i]])
-  }
+  
+  ## this code block is failing in BioC 3.13, but never seems to be used
+  ## we'll just comment it out - MLS 2020/12/17
+  # GL.text <- GL
+  # for (i in 3:10) {
+  #   GL.text[[i]] <- sprintf("%0.3f",GL.text[[i]])
+  # }
 
   con <- file("Tab3_HotellingT2.txt", "wb")
   t <- switch(c,
