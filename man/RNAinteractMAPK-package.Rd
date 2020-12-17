@@ -77,7 +77,8 @@ data(Dmel2PPMAPK)
 Dmel2PPMAPK
 
 # Obtain the pairwise interaction matrix
-PI <- getData(Dmel2PPMAPK, type="pi", format="targetMatrix", screen="mean", withoutgroups = c("pos", "neg"))
+PI <- getData(Dmel2PPMAPK, type="pi", format="targetMatrix", 
+              screen="mean", withoutgroups = c("pos", "neg"))
 }
 
 

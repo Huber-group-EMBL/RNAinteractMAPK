@@ -7,6 +7,17 @@ importFrom(gdata, upperTriangle)
 import(RNAinteract)
 
 
+importFrom("grDevices", "col2rgb", "colorRampPalette", "contourLines",
+           "rainbow")
+importFrom("graphics", "par")
+importFrom("methods", "is")
+importFrom("stats", "as.dendrogram", "mad", "median",
+           "order.dendrogram", "predict", "quantile", "sd")
+importFrom("utils", "write.table")
+importFrom("lattice", "levelplot", "panel.levelplot", "panel.contourplot")
+importFrom("Biobase", "rowMin")
+importFrom("fields", "Tps")
+
 export(MAPK.predict.classification)
 export(MAPK.cv.classifier)
 export(MAPK.plot.classification)
