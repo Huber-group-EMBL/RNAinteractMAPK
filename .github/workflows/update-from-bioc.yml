@@ -21,10 +21,11 @@ jobs:
     
     - name: Get any missing commits from Bioconductor
       run: |
-      
+        git config pull.rebase false
+        git --no-pager log -n 4
         git remote add bioc "https://git.bioconductor.org/packages/${PACKAGE_NAME}"
         git fetch --all
+        git --no-pager log bioc/master -n 4
         git pull bioc master
-        git push origin master || echo "No changes to commit"
         
 
