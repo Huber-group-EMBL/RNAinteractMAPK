@@ -12,7 +12,7 @@ jobs:
   check-for-bioc-updates:
     runs-on: ubuntu-20.04
     
-     steps:
+    steps:
     - uses: actions/checkout@v2
     
     - name: Get any missing commits from Bioconductor
