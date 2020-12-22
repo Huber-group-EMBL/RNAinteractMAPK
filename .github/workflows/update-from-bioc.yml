@@ -4,7 +4,7 @@ on:
     - cron:  '0 0 1 * *'
   push:
     branches:
-      - master
+      - workflow
       
 name: check-for-bioc-updates
 
@@ -23,9 +23,12 @@ jobs:
       run: |
         git config pull.rebase false
         git --no-pager log -n 4
+        
+    - name: step 2
+      run: |
         git remote add bioc "https://git.bioconductor.org/packages/${PACKAGE_NAME}"
+        git --no-pager log bioc/master -n 2 
         git fetch --all
-        git --no-pager log bioc/master -n 4
-        git pull bioc master
+       
         
 
