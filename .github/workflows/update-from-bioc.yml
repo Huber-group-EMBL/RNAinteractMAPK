@@ -15,9 +15,14 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     
+    - name: Set package name as environment variable
+      run: |
+        echo "PACKAGE_NAME=`basename ${GITHUB_REPOSITORY}`" >> $GITHUB_ENV
+    
     - name: Get any missing commits from Bioconductor
       run: |
-        git remote add bioc https://git.bioconductor.org/packages/
+      
+        git remote add bioc "https://git.bioconductor.org/packages/${PACKAGE_NAME}"
         git fetch --all
         git pull bioc master
         git push origin master || echo "No changes to commit"
